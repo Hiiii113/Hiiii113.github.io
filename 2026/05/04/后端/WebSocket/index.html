@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>WebSocket | Hiiii113</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="# WebSocket 一、简介WebSocket 是一种前端技术，设计用于提供低延时、全双工和长期运行的链接  全双工：通信的两个参与方可以同时发送和接受数据，不需要等待双方的响应或传输完成  更加形象的说：WebSocket 的出现就是为了解决实时通信的问题  传统通信：电子邮件、网页浏览等，存在延迟，需要用户主动请求来更新数据 实时通信：即时的消息传递、音视频通话、在线会议和实时数据传输等">
+<meta property="og:type" content="article">
+<meta property="og:title" content="WebSocket">
+<meta property="og:url" content="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/WebSocket/index.html">
+<meta property="og:site_name" content="Hiiii113">
+<meta property="og:description" content="# WebSocket 一、简介WebSocket 是一种前端技术，设计用于提供低延时、全双工和长期运行的链接  全双工：通信的两个参与方可以同时发送和接受数据，不需要等待双方的响应或传输完成  更加形象的说：WebSocket 的出现就是为了解决实时通信的问题  传统通信：电子邮件、网页浏览等，存在延迟，需要用户主动请求来更新数据 实时通信：即时的消息传递、音视频通话、在线会议和实时数据传输等">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/assets/image-20260404212750580.png">
+<meta property="article:published_time" content="2026-05-04T10:09:12.000Z">
+<meta property="article:modified_time" content="2026-04-28T13:33:30.000Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/assets/image-20260404212750580.png">
+  
+    <link rel="alternate" href="/atom.xml" title="Hiiii113" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hiiii113</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">个人博客网站</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-后端/WebSocket" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/WebSocket/" class="article-date">
+  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      WebSocket
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>﻿# WebSocket</p>
+<h2 id="一、简介"><a href="#一、简介" class="headerlink" title="一、简介"></a>一、简介</h2><p>WebSocket 是一种前端技术，设计用于提供<strong>低延时</strong>、<strong>全双工</strong>和<strong>长期运行</strong>的链接</p>
+<blockquote>
+<p>全双工：通信的两个参与方可以同时发送和接受数据，不需要等待双方的响应或传输完成</p>
+</blockquote>
+<p>更加形象的说：WebSocket 的出现就是为了解决实时通信的问题</p>
+<ul>
+<li><strong>传统通信</strong>：电子邮件、网页浏览等，存在延迟，需要用户主动请求来更新数据</li>
+<li><strong>实时通信</strong>：即时的消息传递、音视频通话、在线会议和实时数据传输等，可以实现即时的数据传输和交流，不需要用户主动请求或刷新来获取更新数据</li>
+</ul>
+<p>在 WebSocket 之前，主要有着这么几种方式用于解决实时通信：</p>
+<ul>
+<li><strong>轮询</strong>：客户端定期向服务器发送请求</li>
+<li><strong>长轮询</strong>：客户端发出请求后，保持链接打开，等待新数据响应后再关闭连接</li>
+<li><strong>Comet</strong>：保持长连接，在返回请求后继续保持连接打开</li>
+</ul>
+<p>所以总的来说，WebSocket 有着以下的优势：</p>
+<ul>
+<li><strong>双向实时通信</strong>：允许在单个、长时间的连接上进行双向实时通信，在需要快速实时更新的应用程序里，比 HTTP 更加高效</li>
+<li><strong>降低延迟</strong>：链接一旦建立便会保持开放，数据可以在客户端和服务器之间以比 HTTP 更低的延迟进行传输</li>
+<li><strong>更高效的资源利用</strong>：可以减少重复的请求和响应的开销，因为连接只需要建立一次</li>
+</ul>
+<h2 id="二、如何建立-WebSocket-连接"><a href="#二、如何建立-WebSocket-连接" class="headerlink" title="二、如何建立 WebSocket 连接"></a>二、如何建立 WebSocket 连接</h2><h3 id="1-WebSocket-的生命周期"><a href="#1-WebSocket-的生命周期" class="headerlink" title="1. WebSocket 的生命周期"></a>1. WebSocket 的生命周期</h3><p>在进行连接之前，我们需要知道 WebSocket 的生命周期，一个 WebSocket 连接包含以下四个主要阶段：</p>
+<ul>
+<li><strong>连接建立阶段（Connection Establishment）</strong>： 在这个阶段，客户端和服务器之间的 WebSocket 连接被建立。客户端发送一个 WebSocket 握手请求，服务器响应一个握手响应，然后连接就被建立了</li>
+<li><strong>连接开放阶段（Connection Open）</strong>： 在这个阶段，WebSocket 连接已经建立并开放，客户端和服务器可以在连接上互相发送数据</li>
+<li><strong>连接关闭阶段（Connection Closing）</strong>： 在这个阶段，一个 WebSocket 连接即将被关闭。它可以被客户端或服务器发起，通过发送一个关闭帧来关闭连接。</li>
+<li><strong>连接关闭完成阶段（Connection Closed）：</strong> 在这个阶段，WebSocket 连接已经完全关闭。客户端和服务器之间的任何交互都将无效</li>
+</ul>
+<blockquote>
+<p>需要注意的是，WebSocket 连接在任何时候都可能关闭，例如网络故障、服务器崩溃等情况都可能导致连接关闭。因此，需要及时处理 WebSocket 连接关闭的事件，以确保应用程序的可靠性和稳定性</p>
+</blockquote>
+<h3 id="2-WebSocket-的消息格式"><a href="#2-WebSocket-的消息格式" class="headerlink" title="2. WebSocket 的消息格式"></a>2. WebSocket 的消息格式</h3><p>WebSocket 消息格式由两个部分组成：消息头和消息体</p>
+<p>消息头包含以下信息：</p>
+<ul>
+<li><strong>FIN：</strong> 表示这是一条完整的消息，一般情况下都是1</li>
+<li><strong>RSV1、RSV2、RSV3：</strong> 暂时没有使用，一般都是0，只有当使用到了一些拓展服务的时候，才为1</li>
+<li><strong>Opcode：</strong> 表示消息的类型，包括文本消息、二进制消息等</li>
+<li><strong>Mask：</strong> 表示消息是否加密</li>
+<li><strong>Payload length：</strong> 表示消息体的长度</li>
+<li><strong>Masking key：</strong> 仅在消息需要加密时出现，用于对消息进行解密</li>
+</ul>
+<p>消息体就是实际传输的数据，可以是文本或二进制数据</p>
+<h3 id="3-WebSocket-的-API"><a href="#3-WebSocket-的-API" class="headerlink" title="3. WebSocket 的 API"></a>3. WebSocket 的 API</h3><p>WebSocket API 是用于在 Web 应用程序中创建和管理 WebSocket 连接的接口集合。WebSocket API 由浏览器原生支持，无需使用额外的 JavaScript 库或框架，可以直接在 JavaScript 中使用</p>
+<ul>
+<li><p><strong>WebSocket 构造函数</strong>：用于创建 WebSocket 对象，他接受一个 URL 作为参数，表示需要连接的 WebSocket 服务器的地址</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> ws = <span class="keyword">new</span> <span class="title class_">WebSocket</span>(<span class="string">&#x27;ws://example.com/ws&#x27;</span>);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>WebSocket.send()</code> 方法</strong>：用于向服务器发送数据。它接受一个参数，表示要发送的数据。数据可以是字符串、Blob 对象或 ArrayBuffer 对象</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ws.<span class="title function_">send</span>(<span class="string">&#x27;Hello server!&#x27;</span>);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>WebSocket.onopen 事件</strong>： <code>WebSocket.onopen</code> 事件在 WebSocket 连接成功建立时触发</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ws.<span class="property">onopen</span> = <span class="keyword">function</span>(<span class="params"></span>) &#123;</span><br><span class="line">	<span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;WebSocket 连接已建立！&#x27;</span>);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>WebSocket.onmessage 事件</strong>： <code>WebSocket.onmessage</code> 事件在接收到服务器发送的消息时触发，它的 event 对象包含一个 data 属性，表示接收到的数据</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ws.<span class="property">onmessage</span> = <span class="keyword">function</span>(<span class="params">event</span>) &#123;</span><br><span class="line">	<span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;收到服务器消息：&#x27;</span>, event.<span class="property">data</span>);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>WebSocket.onerror 事件</strong>： <code>WebSocket.onerror</code> 事件在 WebSocket 连接出现错误时触发</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ws.<span class="property">onerror</span> = <span class="keyword">function</span>(<span class="params">event</span>) &#123;</span><br><span class="line">	<span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;WebSocket 连接出现错误！&#x27;</span>, event);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>WebSocket.onclose 事件</strong>： <code>WebSocket.onclose</code> 事件在 WebSocket 连接被关闭时触发</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ws.<span class="property">onclose</span> = <span class="keyword">function</span>(<span class="params"></span>) &#123;</span><br><span class="line">	<span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;WebSocket 连接已经关闭！&#x27;</span>);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="4-WebSocket-如何实现的连接？"><a href="#4-WebSocket-如何实现的连接？" class="headerlink" title="4. WebSocket 如何实现的连接？"></a>4. WebSocket 如何实现的连接？</h3><p>大体的思路就是：先发送一次常规的 GET 请求，并在请求头上的 Upgrade 上带上字段 websocket，即可升级为 WebSocket 请求</p>
+<p><img src="/assets/image-20260404212750580.png" alt="image-20260404212750580"></p>
+<h2 id="三、如何在-Java-中使用-WebSocket？"><a href="#三、如何在-Java-中使用-WebSocket？" class="headerlink" title="三、如何在 Java 中使用 WebSocket？"></a>三、如何在 Java 中使用 WebSocket？</h2><h3 id="1-导入依赖"><a href="#1-导入依赖" class="headerlink" title="1. 导入依赖"></a>1. 导入依赖</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>javax.websocket<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>javax.websocket-api<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.1<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-使用-Java-WebSocket-API-编写-WebSocket-服务端"><a href="#2-使用-Java-WebSocket-API-编写-WebSocket-服务端" class="headerlink" title="2. 使用 Java WebSocket API 编写 WebSocket 服务端"></a>2. 使用 Java WebSocket API 编写 WebSocket 服务端</h3><p>示例代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> javax.websocket.*;</span><br><span class="line"><span class="keyword">import</span> javax.websocket.server.ServerEndpoint;</span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"> </span><br><span class="line"><span class="meta">@ServerEndpoint(&quot;/echo&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">EchoServer</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="meta">@OnOpen</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onOpen</span><span class="params">(Session session)</span></span><br><span class="line">    &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;WebSocket 连接已经建立&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnMessage</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onMessage</span><span class="params">(String message, Session session)</span> <span class="keyword">throws</span> IOException</span><br><span class="line">    &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;收到客户端消息：&quot;</span> + message);</span><br><span class="line">        session.getBasicRemote().sendText(<span class="string">&quot;服务器收到消息：&quot;</span> + message);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnClose</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onClose</span><span class="params">()</span></span><br><span class="line">    &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;WebSocket 连接已经关闭&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnError</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onError</span><span class="params">(Throwable t)</span></span><br><span class="line">    &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;WebSocket 连接出现错误：&quot;</span> + t.getMessage());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这个示例代码里面，定义了一个名为<code>echo</code>的 WebSocket 端点，它会监听客户端发来的消息，并将收到的消息返回给客户端</p>
+<p>具体来说，它使用了<code>@ServerEndpoint</code> 注解来指定 WebSocket 端点的 URL，使用了 <code>@OnOpen</code>、<code>@OnMessage</code>、<code>@OnClose</code> 和 <code>@OnError</code> 注解来定义 WebSocket 事件处理器</p>
+<p>同时这里给出一个 HTML&#x2F;JavaScript 客户端代码：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!DOCTYPE <span class="keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">&quot;UTF-8&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">title</span>&gt;</span>WebSocket Demo<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript">        <span class="keyword">var</span> ws = <span class="keyword">new</span> <span class="title class_">WebSocket</span>(<span class="string">&#x27;ws://localhost:8080/echo&#x27;</span>);</span></span><br><span class="line"><span class="language-javascript">        ws.<span class="property">onopen</span> = <span class="keyword">function</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="language-javascript">        &#123;</span></span><br><span class="line"><span class="language-javascript">            <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;WebSocket 连接已经建立。&#x27;</span>);</span></span><br><span class="line"><span class="language-javascript">            ws.<span class="title function_">send</span>(<span class="string">&#x27;Hello, server!&#x27;</span>);</span></span><br><span class="line"><span class="language-javascript">        &#125;;</span></span><br><span class="line"><span class="language-javascript">        ws.<span class="property">onmessage</span> = <span class="keyword">function</span>(<span class="params">event</span>)</span></span><br><span class="line"><span class="language-javascript">        &#123;</span></span><br><span class="line"><span class="language-javascript">            <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;收到服务器消息：&#x27;</span>, event.<span class="property">data</span>);</span></span><br><span class="line"><span class="language-javascript">        &#125;;</span></span><br><span class="line"><span class="language-javascript">        ws.<span class="property">onerror</span> = <span class="keyword">function</span>(<span class="params">event</span>)</span></span><br><span class="line"><span class="language-javascript">        &#123;</span></span><br><span class="line"><span class="language-javascript">            <span class="variable language_">console</span>.<span class="title function_">error</span>(<span class="string">&#x27;WebSocket 连接出现错误：&#x27;</span>, event);</span></span><br><span class="line"><span class="language-javascript">        &#125;;</span></span><br><span class="line"><span class="language-javascript">        ws.<span class="property">onclose</span> = <span class="keyword">function</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="language-javascript">        &#123;</span></span><br><span class="line"><span class="language-javascript">            <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;WebSocket 连接已经关闭。&#x27;</span>);</span></span><br><span class="line"><span class="language-javascript">        &#125;;</span></span><br><span class="line"><span class="language-javascript">    </span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">h1</span>&gt;</span>WebSocket Demo<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-使用-Java-WebSocket-API-编写-WebSocket-客户端"><a href="#3-使用-Java-WebSocket-API-编写-WebSocket-客户端" class="headerlink" title="3. 使用 Java WebSocket API 编写 WebSocket 客户端"></a>3. 使用 Java WebSocket API 编写 WebSocket 客户端</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> javax.websocket.*;</span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.net.URI;</span><br><span class="line"> </span><br><span class="line"><span class="meta">@ClientEndpoint</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">EchoClient</span> &#123;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">private</span> Session session;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnOpen</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onOpen</span><span class="params">(Session session)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;WebSocket 连接已经建立。&quot;</span>);</span><br><span class="line">        <span class="built_in">this</span>.session = session;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnMessage</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onMessage</span><span class="params">(String message, Session session)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;收到服务器消息：&quot;</span> + message);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnClose</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onClose</span><span class="params">()</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;WebSocket 连接已经关闭。&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnError</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onError</span><span class="params">(Throwable t)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;WebSocket 连接出现错误：&quot;</span> + t.getMessage());</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">connect</span><span class="params">(String url)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="type">WebSocketContainer</span> <span class="variable">container</span> <span class="operator">=</span> ContainerProvider.getWebSocketContainer();</span><br><span class="line">        container.connectToServer(<span class="built_in">this</span>, <span class="keyword">new</span> <span class="title class_">URI</span>(url));</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">send</span><span class="params">(String message)</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        session.getBasicRemote().sendText(message);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">close</span><span class="params">()</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        session.close();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-使用-Spring-Boot-编写-WebSocket-服务端"><a href="#4-使用-Spring-Boot-编写-WebSocket-服务端" class="headerlink" title="4. 使用 Spring Boot 编写 WebSocket 服务端"></a>4. 使用 Spring Boot 编写 WebSocket 服务端</h3><h4 id="4-1-引入依赖"><a href="#4-1-引入依赖" class="headerlink" title="4.1 引入依赖"></a>4.1 引入依赖</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-websocket<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="4-2-配置-WebSocket"><a href="#4-2-配置-WebSocket" class="headerlink" title="4.2 配置 WebSocket"></a>4.2 配置 WebSocket</h4><p>创建一个类，并添加注解<code>@ServerEndpoint(&quot;/websocket&quot;)</code>，这将指定 WebSocket 服务端的端点</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> javax.websocket.OnClose;</span><br><span class="line"><span class="keyword">import</span> javax.websocket.OnMessage;</span><br><span class="line"><span class="keyword">import</span> javax.websocket.OnOpen;</span><br><span class="line"><span class="keyword">import</span> javax.websocket.Session;</span><br><span class="line"><span class="keyword">import</span> javax.websocket.server.ServerEndpoint;</span><br><span class="line"> </span><br><span class="line"><span class="meta">@ServerEndpoint(&quot;/websocket&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">WebSocketServer</span> &#123;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnOpen</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onOpen</span><span class="params">(Session session)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;Connection opened: &quot;</span> + session.getId());</span><br><span class="line">        sessions.add(session);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnMessage</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onMessage</span><span class="params">(Session session, String message)</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;Received message: &quot;</span> + message);</span><br><span class="line">        session.getBasicRemote().sendText(<span class="string">&quot;Server received: &quot;</span> + message);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnClose</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onClose</span><span class="params">(Session session)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;Connection closed: &quot;</span> + session.getId());</span><br><span class="line">        sessions.remove(session);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Set&lt;Session&gt; sessions = Collections.synchronizedSet(<span class="keyword">new</span> <span class="title class_">HashSet</span>&lt;Session&gt;());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="4-3-配置-WebSocket-支持"><a href="#4-3-配置-WebSocket-支持" class="headerlink" title="4.3 配置 WebSocket 支持"></a>4.3 配置 WebSocket 支持</h4><p>最后，需要配置 SpringBoot 以支持 WebSocket，建一个新的配置类，并添加注释<code>@Configuration</code>和<code>@EnableWebSocket</code>，然后，需要覆盖方法<code>registerWebSocketHandlers()</code>，并指定 WebSocket 处理程序</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@EnableWebSocket</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">WebSocketConfig</span> <span class="keyword">implements</span> <span class="title class_">WebSocketConfigurer</span> &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">registerWebSocketHandlers</span><span class="params">(WebSocketHandlerRegistry registry)</span> &#123;</span><br><span class="line">        registry.addHandler(<span class="keyword">new</span> <span class="title class_">WebSocketServer</span>(), <span class="string">&quot;/websocket&quot;</span>).setAllowedOrigins(<span class="string">&quot;*&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在此代码中，我们创建了一个新的<code>WebSocketServer</code>对象，并将其添加到WebSocket处理程序中。我们还指定了WebSocket端点（<code>/websocket</code>）和允许的来源（<code>*</code>）</p>
+<h2 id="四、WebSocket-的消息格式"><a href="#四、WebSocket-的消息格式" class="headerlink" title="四、WebSocket 的消息格式"></a>四、WebSocket 的消息格式</h2><h3 id="1-文本消息"><a href="#1-文本消息" class="headerlink" title="1. 文本消息"></a>1. 文本消息</h3><p>文本消息就是普通的 Unicode 文本字符串，服务器可以使用Session对象的<code>getBasicRemote()</code>方法来向客户端发送文本消息，客户端可以使用 WebSocket 的<code>send()</code>方法来向服务器发送文本消息</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">session.getBasicRemote().sendText(<span class="string">&quot;Hello, client!&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-二进制消息"><a href="#2-二进制消息" class="headerlink" title="2. 二进制消息"></a>2. 二进制消息</h3><p>二进制消息可以是任意类型的数据，包括图像、音频、视频等</p>
+<p>要向客户端发送二进制消息，服务器可以使用 Session 对象的<code>getBasicRemote()</code>方法，将消息作为 ByteBuffer 对象发送。客户端可以使用 WebSocket 的<code>send()</code>方法来向服务器发送二进制消息</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">byte</span>[] data = <span class="comment">// binary data</span></span><br><span class="line"><span class="type">ByteBuffer</span> <span class="variable">buffer</span> <span class="operator">=</span> ByteBuffer.wrap(data);</span><br><span class="line">session.getBasicRemote().sendBinary(buffer);</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-Ping-和-Pong-消息"><a href="#3-Ping-和-Pong-消息" class="headerlink" title="3. Ping 和 Pong 消息"></a>3. Ping 和 Pong 消息</h3><p>WebSocket还支持Ping和Pong消息类型，用于检测WebSocket连接是否仍然处于活动状态</p>
+<p>Ping消息由客户端发送到服务器，Pong消息由服务器发送回客户端作为响应。如果客户端在一段时间内没有收到Pong消息，则它可以假定WebSocket连接已断开，并关闭连接</p>
+<p>要发送Ping消息，请使用Session对象的<code>getBasicRemote()</code>方法，并将Ping消息作为ByteBuffer对象发送。客户端可以使用WebSocket的<code>sendPing()</code>方法来向服务器发送Ping消息</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">ByteBuffer</span> <span class="variable">pingMessage</span> <span class="operator">=</span> ByteBuffer.wrap(<span class="keyword">new</span> <span class="title class_">byte</span>[] &#123; <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span> &#125;);</span><br><span class="line">session.getBasicRemote().sendPing(pingMessage);</span><br></pre></td></tr></table></figure>
+
+<p>要接收Pong消息，请在您的WebSocket处理程序中实现<code>onPong()</code>方法。当您的WebSocket服务器接收到Pong消息时，它将自动调用此方法，并将接收到的Pong消息作为ByteBuffer对象传递给它</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@OnMessage</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onPong</span><span class="params">(Session session, ByteBuffer pongMessage)</span> &#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Received Pong message: &quot;</span> + pongMessage);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>请注意，Ping和Pong消息通常用于WebSocket连接的健康检查。如果您希望在WebSocket连接中使用此功能，则应定期发送Ping消息并等待Pong消息的响应</p>
+<h3 id="4-关闭消息"><a href="#4-关闭消息" class="headerlink" title="4. 关闭消息"></a>4. 关闭消息</h3><p>WebSocket还支持关闭消息类型，用于关闭WebSocket连接。关闭消息可以由客户端或服务器发起，并且可以携带一个可选的状态码和关闭原因。当WebSocket连接关闭时，客户端和服务器都应该发送一个关闭消息以结束连接</p>
+<p>要发送关闭消息，请使用Session对象的<code>getBasicRemote()</code>方法，并调用它的<code>sendClose()</code>方法。关闭消息可以携带一个可选的状态码和关闭原因。如果您不希望发送状态码或关闭原因，则可以将它们设置为0和null</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">session.close(<span class="keyword">new</span> <span class="title class_">CloseReason</span>(CloseReason.CloseCodes.NORMAL_CLOSURE, <span class="string">&quot;Closing from client.&quot;</span>));</span><br></pre></td></tr></table></figure>
+
+<p>要处理接收到的关闭消息，请在您的WebSocket处理程序中实现<code>onClose()</code>方法。当您的WebSocket服务器接收到关闭消息时，它将自动调用此方法，并将接收到的状态码和关闭原因传递给它</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@OnClose</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onClose</span><span class="params">(Session session, CloseReason closeReason)</span> &#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Connection closed: &quot;</span> + closeReason.getCloseCode() + <span class="string">&quot; - &quot;</span> + closeReason.getReasonPhrase());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>请注意，客户端和服务器都应该发送关闭消息以结束WebSocket连接。如果只有一方发送了关闭消息，则另一方可能无法正确地关闭连接，并且可能需要等待超时才能释放资源。建议客户端和服务器在关闭连接时都发送关闭消息，以确保连接正确地关闭</p>
+<h2 id="五、为什么需要心跳机制？"><a href="#五、为什么需要心跳机制？" class="headerlink" title="五、为什么需要心跳机制？"></a>五、为什么需要心跳机制？</h2><p>为了保持 WebSocket 稳定的长连接，在连接建立之后，服务器和客户端之间通过心跳包来保持链接状态，以防止连接因为长时间没有数据而被切断</p>
+<p>具体方式是：服务器和客户端之间通过心跳包（也就是一种特殊的数据包，不包含任何实际数据，仅用来维持连接状态）来定期发送一个空的数据帧来确保双方之间的连接是否有效</p>
+<p>如果一段时间内没有接收到心跳包，就可以认为连接断开，需要重新建立连接</p>
+<h2 id="四、WebSocket-的限制"><a href="#四、WebSocket-的限制" class="headerlink" title="四、WebSocket 的限制"></a>四、WebSocket 的限制</h2><ol>
+<li><strong>没有加密功能</strong>：如果有安全需求，需要使用其他方式（SSL协议或者设置黑白名单）</li>
+<li><strong>不支持古老的浏览器</strong>：不支持 IE10 之前的版本</li>
+<li><strong>优化很重要</strong>：保持长连接需要服务器不断的维护和处理连接状态，需要优化性能</li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/WebSocket/" data-id="cuidXABsJl760rcd3czFveZ-0" data-title="WebSocket" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/lambda%E8%AF%AD%E5%8F%A5%E4%BD%BF%E7%94%A8/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">前一篇</strong>
+      <div class="article-nav-title">
+        
+          lambda语句使用
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%89%8D%E5%90%8E%E7%AB%AF%E4%BA%A4%E4%BA%92%E7%AC%94%E8%AE%B0/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">前后端交互笔记</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/05/">五月 2026</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2026/05/04/add-frontmatter/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/">Go文件操作</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E5%9F%BA%E7%A1%80/">GO基础</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E6%8B%93%E5%B1%95/">Go 拓展</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E8%BF%9B%E9%98%B6/">GO进阶</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2026 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

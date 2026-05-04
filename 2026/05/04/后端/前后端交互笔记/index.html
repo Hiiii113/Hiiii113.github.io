@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>前后端交互笔记 | Hiiii113</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="# 前后端交互笔记 HttpServlet在请求处理类继承了HttpServlet的时候，可以重写doPost和doGet两个函数，他们分别有HttpServletRequest request和HttpServletResponse response两个参数 request可以做的事如下：    方法 作用 登录场景示例    setCharacterEncoding(&quot;UTF-8&amp;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="前后端交互笔记">
+<meta property="og:url" content="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%89%8D%E5%90%8E%E7%AB%AF%E4%BA%A4%E4%BA%92%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Hiiii113">
+<meta property="og:description" content="# 前后端交互笔记 HttpServlet在请求处理类继承了HttpServlet的时候，可以重写doPost和doGet两个函数，他们分别有HttpServletRequest request和HttpServletResponse response两个参数 request可以做的事如下：    方法 作用 登录场景示例    setCharacterEncoding(&quot;UTF-8&amp;">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-05-04T10:09:12.000Z">
+<meta property="article:modified_time" content="2026-04-28T13:33:31.000Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="Hiiii113" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hiiii113</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">个人博客网站</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-后端/前后端交互笔记" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%89%8D%E5%90%8E%E7%AB%AF%E4%BA%A4%E4%BA%92%E7%AC%94%E8%AE%B0/" class="article-date">
+  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      前后端交互笔记
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>﻿# 前后端交互笔记</p>
+<h2 id="HttpServlet"><a href="#HttpServlet" class="headerlink" title="HttpServlet"></a>HttpServlet</h2><p>在请求处理类继承了<code>HttpServlet</code>的时候，可以重写<code>doPost</code>和<code>doGet</code>两个函数，他们分别有<code>HttpServletRequest request</code>和<code>HttpServletResponse response</code>两个参数</p>
+<p><strong><code>request</code>可以做的事如下：</strong></p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>作用</th>
+<th>登录场景示例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>setCharacterEncoding(&quot;UTF-8&quot;)</code></td>
+<td>设置请求编码（解决中文参数乱码，必须放在获取参数之前）</td>
+<td><code>request.setCharacterEncoding(&quot;UTF-8&quot;);</code></td>
+</tr>
+<tr>
+<td><code>getParameter(&quot;参数名&quot;)</code></td>
+<td>获取前端传的单个参数（POST&#x2F;GET 都能用）</td>
+<td><code>String username = request.getParameter(&quot;username&quot;);</code></td>
+</tr>
+<tr>
+<td><code>getParameterMap()</code></td>
+<td>获取所有参数（返回Map&lt;String, String[]&gt;，适合多值参数如复选框）</td>
+<td>登录场景用不到，注册&#x2F;表单场景常用</td>
+</tr>
+<tr>
+<td><code>getHeader(&quot;请求头名&quot;)</code></td>
+<td>获取请求头（如Token、Content-Type）</td>
+<td><code>String token = request.getHeader(&quot;token&quot;);</code></td>
+</tr>
+<tr>
+<td><code>setAttribute(&quot;key&quot;, value)</code></td>
+<td>往请求域存数据（仅转发时有效）</td>
+<td><code>request.setAttribute(&quot;msg&quot;, &quot;登录失败&quot;);</code></td>
+</tr>
+<tr>
+<td><code>getRequestDispatcher(&quot;路径&quot;)</code></td>
+<td>请求转发（跳转到其他页面&#x2F;Servlet，服务器内部跳转）</td>
+<td>登录失败转发回登录页</td>
+</tr>
+</tbody></table>
+<p><strong><code>response</code>的操作：</strong></p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>作用</th>
+<th>登录场景示例</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>setCharacterEncoding(&quot;UTF-8&quot;)</code></td>
+<td>设置响应编码（解决返回中文乱码）</td>
+<td><code>response.setCharacterEncoding(&quot;UTF-8&quot;);</code></td>
+</tr>
+<tr>
+<td><code>setContentType(&quot;类型&quot;)</code></td>
+<td>设置响应类型（如 HTML&#x2F;JSON，同时会指定编码）</td>
+<td><code>response.setContentType(&quot;application/json;charset=UTF-8&quot;);</code></td>
+</tr>
+<tr>
+<td><code>getWriter().write(&quot;内容&quot;)</code></td>
+<td>给前端返回字符串&#x2F;JSON数据（最常用）</td>
+<td><code>writer.write(&quot;{/&quot;code/&quot;:200,/&quot;msg/&quot;:/&quot;登录成功/&quot;}&quot;);</code></td>
+</tr>
+<tr>
+<td><code>sendRedirect(&quot;路径&quot;)</code></td>
+<td>重定向（客户端跳转，如登录成功跳首页）</td>
+<td><code>response.sendRedirect(&quot;/home.html&quot;);</code></td>
+</tr>
+<tr>
+<td><code>setHeader(&quot;头名&quot;, &quot;值&quot;)</code></td>
+<td>设置响应头（如跨域、缓存）</td>
+<td><code>response.setHeader(&quot;Access-Control-Allow-Origin&quot;, &quot;*&quot;);</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="setTimeout"><a href="#setTimeout" class="headerlink" title="setTimeout"></a>setTimeout</h2><p><code>setTimeout</code> 是 <strong>JavaScript</strong> 中的一个全局函数（实际上是 <strong><code>window.setTimeout</code></strong>），用于在指定的延迟时间（<strong>毫秒</strong>）后，执行一次指定的函数或代码段。它是实现<strong>异步编程</strong>、延迟执行和定时任务**的核心工具。</p>
+<ol>
+<li><strong>基本语法</strong></li>
+</ol>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> timerId = <span class="built_in">setTimeout</span>(callback, delay, param1, param2, ...);</span><br></pre></td></tr></table></figure>
+
+<ol>
+<li><strong>关键行为与注意事项</strong><ol>
+<li><p><strong>只执行一次</strong>：与 <code>setInterval</code>（重复执行）不同，<code>setTimeout</code> 在延迟结束后<strong>只执行一次</strong>回调。若需重复执行，通常需要在回调函数内部<strong>递归****调用</strong> <strong><code>setTimeout</code></strong>。</p>
+</li>
+<li><p><strong>延迟不绝对精确</strong>：实际的执行时间<strong>可能晚于</strong>设定的 <code>delay</code>。因为如果主线程正忙于执行其他同步任务（如长循环、复杂计算），事件队列中的回调就必须排队等待。</p>
+</li>
+<li><p><strong><code>this</code></strong> <strong>指向问题</strong>：在普通函数形式的回调中，<code>this</code> 通常会丢失其原始上下文，而指向全局对象（浏览器中是 <code>window</code>）或 <code>undefined</code>（严格模式）。解决方法有：</p>
+<ul>
+<li><p>使用<strong>箭头函数</strong>（推荐）：<code>setTimeout(() =&gt; { this.doSomething() }, 1000)</code></p>
+</li>
+<li><p>在外部保存 <code>this</code>：<code>const self = this; setTimeout(function() { self.doSomething() }, 1000)</code></p>
+</li>
+<li><p>使用 <code>bind</code>：<code>setTimeout(this.doSomething.bind(this), 1000)</code></p>
+</li>
+</ul>
+</li>
+<li><p><strong>最小延迟限制</strong>：浏览器有最小延迟时间限制（通常为 <strong>4ms</strong>），嵌套调用的 <code>setTimeout</code> 延迟会被强制增加。</p>
+</li>
+</ol>
+</li>
+</ol>
+<hr>
+<h2 id="常用的错误码"><a href="#常用的错误码" class="headerlink" title="常用的错误码"></a>常用的错误码</h2><table>
+<thead>
+<tr>
+<th>分类</th>
+<th>状态码</th>
+<th>名称</th>
+<th>含义</th>
+<th>典型使用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>成功</strong></td>
+<td>&#x3D;&#x3D;<strong>200</strong>&#x3D;&#x3D;</td>
+<td>OK</td>
+<td>请求成功</td>
+<td>登录成功、查询数据、提交表单正常完成。</td>
+</tr>
+<tr>
+<td></td>
+<td>&#x3D;&#x3D;<strong>201</strong>&#x3D;&#x3D;</td>
+<td>Created</td>
+<td>资源创建成功</td>
+<td>用户注册成功、新建文章成功。</td>
+</tr>
+<tr>
+<td></td>
+<td>&#x3D;&#x3D;<strong>204</strong>&#x3D;&#x3D;</td>
+<td>No Content</td>
+<td>成功但无内容</td>
+<td>删除操作成功，无需返回数据。</td>
+</tr>
+<tr>
+<td><strong>客户端错误</strong></td>
+<td>&#x3D;&#x3D;<strong>400</strong>&#x3D;&#x3D;</td>
+<td>Bad Request</td>
+<td>请求参数错误</td>
+<td>JSON 格式错误、必填项缺失、数据类型不对。</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>401</strong></td>
+<td>Unauthorized</td>
+<td>未授权&#x2F;未登录</td>
+<td>Token 过期、未携带 Token、密码错误(严格模式)。</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>403</strong></td>
+<td>Forbidden</td>
+<td>禁止访问</td>
+<td>已登录但权限不足（如普通用户访问管理员接口）。</td>
+</tr>
+<tr>
+<td></td>
+<td>&#x3D;&#x3D;<strong>404</strong>&#x3D;&#x3D;</td>
+<td>Not Found</td>
+<td>资源不存在</td>
+<td>请求的 URL 错误、查询的数据 ID 不存在。</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>405</strong></td>
+<td>Method Not Allowed</td>
+<td>方法不允许</td>
+<td>用 GET 请求了只支持 POST 的接口。</td>
+</tr>
+<tr>
+<td></td>
+<td>&#x3D;&#x3D;<strong>409</strong>&#x3D;&#x3D;</td>
+<td>Conflict</td>
+<td>资源冲突</td>
+<td>注册用户时用户名已存在。</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>429</strong></td>
+<td>Too Many Requests</td>
+<td>请求过于频繁</td>
+<td>触发限流、验证码尝试次数过多。</td>
+</tr>
+<tr>
+<td><strong>服务器错误</strong></td>
+<td>&#x3D;&#x3D;<strong>500</strong>&#x3D;&#x3D;</td>
+<td>Internal Server Error</td>
+<td>服务器内部错误</td>
+<td>代码抛出异常、数据库连接失败、空指针。</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>502</strong></td>
+<td>Bad Gateway</td>
+<td>网关错误</td>
+<td>后端服务挂了，Nginx 连不上。</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>503</strong></td>
+<td>Service Unavailable</td>
+<td>服务不可用</td>
+<td>服务器维护中、负载过高。</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>504</strong></td>
+<td>Gateway Timeout</td>
+<td>网关超时</td>
+<td>后端处理时间过长，超过网关等待时间。</td>
+</tr>
+</tbody></table>
+<h2 id="存储信息"><a href="#存储信息" class="headerlink" title="存储信息"></a>存储信息</h2><p>在前端需要临时存储一些用户信息的时候，可以尝试使用&#x3D;&#x3D;web Storage&#x3D;&#x3D;这个技术</p>
+<p>Web Storage是HTML5内置的前端本地存储技术，无需任何框架、插件</p>
+<p>Web Storage分为 <code>session Storage</code> 和 <code>localStorage</code></p>
+<p>它们的区别是：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>sessionStorage(会话存储)</th>
+<th>localStorage(本地存储)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>存储有效期</td>
+<td>仅当前会话有效（关闭会话或标签页失效）</td>
+<td>持久有效（除非手动清除浏览器缓存）</td>
+</tr>
+<tr>
+<td>作用域</td>
+<td>当前标签页</td>
+<td>用域名下所有标签页共享</td>
+</tr>
+<tr>
+<td>存储大小</td>
+<td>约5mb</td>
+<td>约5mb</td>
+</tr>
+<tr>
+<td>适用场景</td>
+<td>&#x3D;&#x3D;临时存储状态&#x3D;&#x3D;</td>
+<td>&#x3D;&#x3D;持久存储状态（记住登录）&#x3D;&#x3D;</td>
+</tr>
+</tbody></table>
+<ol>
+<li>存储数据</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1. 存储简单字符串</span></span><br><span class="line">sessionStorage.setItem(<span class="string">&#x27;username&#x27;</span>, <span class="string">&#x27;zhangsan&#x27;</span>);</span><br><span class="line">localStorage.setItem(<span class="string">&#x27;token&#x27;</span>, <span class="string">&#x27;abc123xyz&#x27;</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 2. 存储对象</span></span><br><span class="line">sessionStorage.setItem(<span class="string">&#x27;userInfo&#x27;</span>, JSON.stringify(userInfo)); localStorage.setItem(<span class="string">&#x27;userInfo&#x27;</span>, JSON.stringify(userInfo));</span><br></pre></td></tr></table></figure>
+
+<ol start="2">
+<li>读取数据</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1. 读取简单字符串</span></span><br><span class="line"><span class="type">const</span> <span class="variable">username</span> <span class="operator">=</span> sessionStorage.getItem(<span class="string">&#x27;username&#x27;</span>);</span><br><span class="line"><span class="type">const</span> <span class="variable">token</span> <span class="operator">=</span> localStorage.getItem(<span class="string">&#x27;token&#x27;</span>);</span><br><span class="line"><span class="comment">// 2. 读取对象（核心：先转JSON对象）</span></span><br><span class="line"><span class="type">const</span> <span class="variable">userStr</span> <span class="operator">=</span> sessionStorage.getItem(<span class="string">&#x27;userInfo&#x27;</span>);</span><br><span class="line"><span class="comment">// 判空避免解析失败</span></span><br><span class="line"><span class="type">const</span> <span class="variable">userInfo</span> <span class="operator">=</span> userStr ? JSON.parse(userStr) : <span class="literal">null</span>;</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>删除数据</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 删除指定键名的存储数据</span></span><br><span class="line">sessionStorage.removeItem(<span class="string">&#x27;userInfo&#x27;</span>);</span><br><span class="line">localStorage.removeItem(<span class="string">&#x27;token&#x27;</span>);</span><br><span class="line"><span class="comment">// 清空所有存储数据（慎用）</span></span><br><span class="line">sessionStorage.clear();</span><br><span class="line">localStorage.clear();</span><br></pre></td></tr></table></figure>
+
+<hr>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%89%8D%E5%90%8E%E7%AB%AF%E4%BA%A4%E4%BA%92%E7%AC%94%E8%AE%B0/" data-id="cuidPQnGNtW-rQGD4MfHurc-C" data-title="前后端交互笔记" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/WebSocket/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">前一篇</strong>
+      <div class="article-nav-title">
+        
+          WebSocket
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%9B%BE%E7%89%87%E7%9A%84%E4%B8%8A%E4%BC%A0/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">图片的上传</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/05/">五月 2026</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2026/05/04/add-frontmatter/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/">Go文件操作</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E5%9F%BA%E7%A1%80/">GO基础</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E6%8B%93%E5%B1%95/">Go 拓展</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E8%BF%9B%E9%98%B6/">GO进阶</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2026 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

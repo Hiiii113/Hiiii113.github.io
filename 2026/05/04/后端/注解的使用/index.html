@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>注解的使用 | Hiiii113</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="# 注解的使用 在实际编写中，我们可能需要给某一个类、方法、成员函数上面加上注解 比如用于标识&#x3D;&#x3D;方法重写&#x3D;&#x3D;的@override等等 这里主要记录如何自定义注解以及如何使用 1. 注解的创建在 idea 里面，可以直接选择创建一个注解 这里给出一个简单的注解示例代码： 123456@Retention(RetentionPolicy.RUNTIME)">
+<meta property="og:type" content="article">
+<meta property="og:title" content="注解的使用">
+<meta property="og:url" content="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%B3%A8%E8%A7%A3%E7%9A%84%E4%BD%BF%E7%94%A8/index.html">
+<meta property="og:site_name" content="Hiiii113">
+<meta property="og:description" content="# 注解的使用 在实际编写中，我们可能需要给某一个类、方法、成员函数上面加上注解 比如用于标识&#x3D;&#x3D;方法重写&#x3D;&#x3D;的@override等等 这里主要记录如何自定义注解以及如何使用 1. 注解的创建在 idea 里面，可以直接选择创建一个注解 这里给出一个简单的注解示例代码： 123456@Retention(RetentionPolicy.RUNTIME)">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-05-04T10:09:12.000Z">
+<meta property="article:modified_time" content="2026-04-28T13:34:19.000Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="Hiiii113" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hiiii113</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">个人博客网站</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-后端/注解的使用" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%B3%A8%E8%A7%A3%E7%9A%84%E4%BD%BF%E7%94%A8/" class="article-date">
+  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      注解的使用
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>﻿# 注解的使用</p>
+<p>在实际编写中，我们可能需要给某一个类、方法、成员函数上面加上注解</p>
+<p>比如用于标识&#x3D;&#x3D;方法重写&#x3D;&#x3D;的<code>@override</code>等等</p>
+<p>这里主要记录<strong>如何自定义注解</strong>以及<strong>如何使用</strong></p>
+<h2 id="1-注解的创建"><a href="#1-注解的创建" class="headerlink" title="1. 注解的创建"></a>1. 注解的创建</h2><p>在 idea 里面，可以直接选择创建一个注解</p>
+<p>这里给出一个简单的注解示例代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span>  </span><br><span class="line"><span class="meta">@Target(ElementType.PARAMETER)</span>  </span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> Param  </span><br><span class="line">&#123;  </span><br><span class="line">    String <span class="title function_">value</span><span class="params">()</span>;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-注解的属性"><a href="#2-注解的属性" class="headerlink" title="2. 注解的属性"></a>2. 注解的属性</h2><p>注解其实就类似于一个说明书，我们可以在类、方法、成员函数上面加上注解，然后来获取相关注解的信息</p>
+<p>其中注解有两个属性</p>
+<ul>
+<li>可以加在哪？（Target）</li>
+<li>存在多久？（Retention）</li>
+</ul>
+<p>以及一个用于读取注解的方法：Reflection（反射）</p>
+<h3 id="2-1-Target"><a href="#2-1-Target" class="headerlink" title="2.1 Target"></a>2.1 Target</h3><p>Target 属性是用于指定这个注解可以贴在哪里的，如果不指定，默认可以贴在任何地方</p>
+<p>Target 的设置示例代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target(&#123;ElementType.METHOD, ElementType.FIELD&#125;)</span></span><br></pre></td></tr></table></figure>
+
+<p>其中有几个<strong>常用值</strong>：</p>
+<ul>
+<li><code>ElementType.TYPE</code>：类、接口、注解、枚举</li>
+<li><code>ElementType.METHOD</code>：方法</li>
+<li><code>ElementType.FIELD</code>：成员变量（属性）</li>
+<li><code>ElementType.PARAMETER</code>：方法的参数</li>
+</ul>
+<p>通过设定以上几个值，就可以指定这个注解可以贴的位置</p>
+<h3 id="2-2-Retention"><a href="#2-2-Retention" class="headerlink" title="2.2 Retention"></a>2.2 Retention</h3><p>Retention 这个属性决定了这个注解的存活周期</p>
+<p>写法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span></span><br></pre></td></tr></table></figure>
+
+<p>Retention 有三种级别：</p>
+<ol>
+<li><code>RetentionPolicy.SOURCE</code>：<strong>编译期丢弃</strong>，只用于给编译期看（比如<code>@Override</code>）</li>
+<li><code>RetentionPolicy.CLASS</code>：<strong>类加载时丢弃</strong>，可以存在于 <code>.class</code> 文件中，但是不会被加载到内存</li>
+<li><code>RetentionPolicy.RUNTIME</code>：<strong>运行期保留</strong>，这是<strong>框架</strong>唯一能读取到的级别，如果想通过反射读取，必须选这个</li>
+</ol>
+<h3 id="2-3-存放与获取"><a href="#2-3-存放与获取" class="headerlink" title="2.3 存放与获取"></a>2.3 存放与获取</h3><p>注解不仅仅是给类、方法、成员函数带上一个标签，更重要的是，注解可以存放一些成员变量，可以让调用者获取</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Table(name = &quot;user_table&quot;)</span> <span class="comment">// 自定义注解 public class User</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">private</span> String name;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>像这样，在注解定义的时候如果有<strong>成员变量</strong>，就可以在注解后的括号内<strong>赋值</strong></p>
+<p>我们可以使用<strong>反射</strong>（Reflection）来获取</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ReflectionDemo</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 1. 获取 Class 对象</span></span><br><span class="line">        Class&lt;User&gt; clazz = User.class;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 2. 检查类上有没有 @Table 注解</span></span><br><span class="line">        <span class="keyword">if</span> (clazz.isAnnotationPresent(Table.class))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 3. 获取该注解对象</span></span><br><span class="line">            <span class="type">Table</span> <span class="variable">table</span> <span class="operator">=</span> clazz.getAnnotation(Table.class);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 4. 读取注解里的属性值（这就是反射的魔力）</span></span><br><span class="line">            <span class="type">String</span> <span class="variable">tableName</span> <span class="operator">=</span> table.name();</span><br><span class="line">            System.out.println(<span class="string">&quot;成功读到数据库表名: &quot;</span> + tableName);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>通过这样，我们就获取了一个注解中包含的东西</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%B3%A8%E8%A7%A3%E7%9A%84%E4%BD%BF%E7%94%A8/" data-id="cuid0nLzqIgK02FcEnC4ycj57" data-title="注解的使用" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%AF%86%E7%A0%81%E5%8A%A0%E5%AF%86/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">前一篇</strong>
+      <div class="article-nav-title">
+        
+          密码加密
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">数据库学习笔记</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/05/">五月 2026</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2026/05/04/add-frontmatter/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/">Go文件操作</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E5%9F%BA%E7%A1%80/">GO基础</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E6%8B%93%E5%B1%95/">Go 拓展</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E8%BF%9B%E9%98%B6/">GO进阶</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2026 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>Redis | Hiiii113</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="Redis一、Redis 概述Redis 的全称是 Remote dictionary server，是一个开源的基于内存的数据存储系统，可以用作数据库、缓存、消息队列等各种场景，Redis 也是目前最热门的 NoSQL 数据库之一 相较于传统的数据库（MySQL）来说，Redis 使用的是内存读写而非磁盘 IO，这会让数据查询的速度大大加快 1. Redis 的数据类型Redis 包含以下几种基">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Redis">
+<meta property="og:url" content="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/Redis/index.html">
+<meta property="og:site_name" content="Hiiii113">
+<meta property="og:description" content="Redis一、Redis 概述Redis 的全称是 Remote dictionary server，是一个开源的基于内存的数据存储系统，可以用作数据库、缓存、消息队列等各种场景，Redis 也是目前最热门的 NoSQL 数据库之一 相较于传统的数据库（MySQL）来说，Redis 使用的是内存读写而非磁盘 IO，这会让数据查询的速度大大加快 1. Redis 的数据类型Redis 包含以下几种基">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-05-04T10:09:12.000Z">
+<meta property="article:modified_time" content="2026-04-28T13:34:21.000Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="Hiiii113" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hiiii113</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">个人博客网站</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-后端/Redis" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/Redis/" class="article-date">
+  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      Redis
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <h1 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h1><h2 id="一、Redis-概述"><a href="#一、Redis-概述" class="headerlink" title="一、Redis 概述"></a>一、Redis 概述</h2><p>Redis 的全称是 Remote dictionary server，是一个开源的基于内存的数据存储系统，可以用作<strong>数据库</strong>、<strong>缓存</strong>、<strong>消息队列</strong>等各种场景，<strong>Redis 也是目前最热门的 NoSQL 数据库之一</strong></p>
+<p>相较于传统的数据库（MySQL）来说，Redis 使用的是<strong>内存读写而非磁盘 IO</strong>，这会让数据查询的速度大大加快</p>
+<h3 id="1-Redis-的数据类型"><a href="#1-Redis-的数据类型" class="headerlink" title="1. Redis 的数据类型"></a>1. Redis 的数据类型</h3><p>Redis 包含以下几种基本数据类型</p>
+<ul>
+<li><p>字符串（String）</p>
+</li>
+<li><p>列表（List）</p>
+</li>
+<li><p>集合（Set）</p>
+</li>
+<li><p>有序集合（SortedSet）</p>
+</li>
+<li><p>哈希（Hash）</p>
+</li>
+</ul>
+<p>和以下几种高级数据类型：</p>
+<ul>
+<li><p>消息队列（Stream）</p>
+</li>
+<li><p>地理空间（Geospatial）</p>
+</li>
+<li><p>HyperLogLog</p>
+</li>
+<li><p>位图（Bitmap）</p>
+</li>
+<li><p>位域（Bitfield）</p>
+</li>
+</ul>
+<h3 id="2-Redis-的使用方式"><a href="#2-Redis-的使用方式" class="headerlink" title="2. Redis 的使用方式"></a>2. Redis 的使用方式</h3><p>Redis 的使用方式有以下几种：</p>
+<ul>
+<li>CLI（Command Line Interface）<ul>
+<li>即通过命令行工具使用</li>
+</ul>
+</li>
+<li>API（Application Programming Interface）<ul>
+<li>即通过 Java、Python 等语言进行使用 Redis</li>
+</ul>
+</li>
+<li>GUI（Graphical User Interface）<ul>
+<li>即通过图形化界面，比如 Redisinsight 使用 Redis</li>
+</ul>
+</li>
+</ul>
+<h3 id="3-优点"><a href="#3-优点" class="headerlink" title="3. 优点"></a>3. 优点</h3><p>总得来说，Redis 的优势有以下几点：</p>
+<ul>
+<li>性能极高</li>
+<li>数据类型丰富，单键值对最大支持512M大小的数据</li>
+<li>简单易用，支持所有主流编程语言</li>
+<li>支持数据持久化、主从复制、哨兵模式等高可用 特性</li>
+</ul>
+<hr>
+<h2 id="二、安装配置"><a href="#二、安装配置" class="headerlink" title="二、安装配置"></a>二、安装配置</h2><p>对于 Mac 或者 Linux 系统来说，安装 Redis 十分简单，只需要一行命令</p>
+<p>但是对于 Windows 系统来说只有以下几种方法：</p>
+<ul>
+<li>使用 Docker 安装镜像并运行</li>
+<li>使用 WSL2 安装 Linux 发行版并安装运行</li>
+<li>使用第三方提供的 windows 版本</li>
+</ul>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/Redis/" data-id="cuidpaAB56w6SkZDo7LVaXUHC" data-title="Redis" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2026/05/04/java/Java%E5%AD%A6%E4%B9%A0%EF%BC%9A%E7%BF%81%E5%87%AF%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0(%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1)/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">前一篇</strong>
+      <div class="article-nav-title">
+        
+          如何创建对象？
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/Mybatis%20Plus%E7%AC%94%E8%AE%B0/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">1. 服务器端口配置</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/05/">五月 2026</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2026/05/04/add-frontmatter/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/">Go文件操作</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E5%9F%BA%E7%A1%80/">GO基础</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E6%8B%93%E5%B1%95/">Go 拓展</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E8%BF%9B%E9%98%B6/">GO进阶</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2026 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>

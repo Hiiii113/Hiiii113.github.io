@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>使用AOP实现日志记录 | Hiiii113</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="# 使用AOP实现日志记录 Spring 的核心思想之一 AOP （面向切面编程）的一个典型应用就是实现日志记录 拥有了 AOP 后，无需在每个方法上添加输出日志的代码，即可实现日志记录，大大节省重复代码量  这里使用的是 MYSQL 数据库保存日志实体，并借此实现查询日志的接口  一、安装依赖本笔记使用的是 SpringBoot 实现，需要检查 pom.xml 中是否含有以下三项依赖： 123">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用AOP实现日志记录">
+<meta property="og:url" content="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E4%BD%BF%E7%94%A8AOP%E5%AE%9E%E7%8E%B0%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/index.html">
+<meta property="og:site_name" content="Hiiii113">
+<meta property="og:description" content="# 使用AOP实现日志记录 Spring 的核心思想之一 AOP （面向切面编程）的一个典型应用就是实现日志记录 拥有了 AOP 后，无需在每个方法上添加输出日志的代码，即可实现日志记录，大大节省重复代码量  这里使用的是 MYSQL 数据库保存日志实体，并借此实现查询日志的接口  一、安装依赖本笔记使用的是 SpringBoot 实现，需要检查 pom.xml 中是否含有以下三项依赖： 123">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2026-05-04T10:09:12.000Z">
+<meta property="article:modified_time" content="2026-04-28T13:33:31.000Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+  
+    <link rel="alternate" href="/atom.xml" title="Hiiii113" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+  
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fork-awesome@1.2.0/css/fork-awesome.min.css">
+
+<meta name="generator" content="Hexo 8.1.1"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">Hiiii113</a>
+      </h1>
+      
+        <h2 id="subtitle-wrap">
+          <a href="/" id="subtitle">个人博客网站</a>
+        </h2>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"><span class="fa fa-bars"></span></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+        
+          <a class="nav-icon" href="/atom.xml" title="RSS 订阅"><span class="fa fa-rss"></span></a>
+        
+        <a class="nav-icon nav-search-btn" title="搜索"><span class="fa fa-search"></span></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜索"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="http://example.com"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-后端/使用AOP实现日志记录" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E4%BD%BF%E7%94%A8AOP%E5%AE%9E%E7%8E%B0%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/" class="article-date">
+  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      使用AOP实现日志记录
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>﻿# 使用AOP实现日志记录</p>
+<p>Spring 的核心思想之一 AOP （面向切面编程）的一个典型应用就是实现日志记录</p>
+<p>拥有了 AOP 后，无需在每个方法上添加输出日志的代码，即可实现日志记录，大大节省重复代码量</p>
+<blockquote>
+<p>这里使用的是 MYSQL 数据库保存日志实体，并借此实现查询日志的接口</p>
+</blockquote>
+<h2 id="一、安装依赖"><a href="#一、安装依赖" class="headerlink" title="一、安装依赖"></a>一、安装依赖</h2><p>本笔记使用的是 SpringBoot 实现，需要检查 <code>pom.xml</code> 中是否含有以下三项依赖：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- Spring Boot Starter Web（包含 AOP） --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-web<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- AOP --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-aop<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- Lombok（省略 getter/setter 和日志声明） --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.projectlombok<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>lombok<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="二、编写注解"><a href="#二、编写注解" class="headerlink" title="二、编写注解"></a>二、编写注解</h2><p>我们需要编写自定义注解类，用于标识哪一个方法、类需要记录日志</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target(&#123;ElementType.METHOD&#125;)</span> <span class="comment">// 只作用于方法</span></span><br><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span> <span class="comment">// 运行时生效</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> LogAnnotation</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 模块名</span></span><br><span class="line">    String <span class="title function_">module</span><span class="params">()</span> <span class="keyword">default</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作名</span></span><br><span class="line">    String <span class="title function_">operator</span><span class="params">()</span> <span class="keyword">default</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>可以自行更改注解名和内含的信息，这里以<strong>模块–操作方法</strong>为例</p>
+</blockquote>
+<h2 id="三、编写日志表和对应实体"><a href="#三、编写日志表和对应实体" class="headerlink" title="三、编写日志表和对应实体"></a>三、编写日志表和对应实体</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 日志表</span></span><br><span class="line"><span class="keyword">CREATE TABLE</span> `sys_operation_log`</span><br><span class="line">(</span><br><span class="line">    id             <span class="type">int</span>          <span class="keyword">NOT NULL</span> AUTO_INCREMENT COMMENT <span class="string">&#x27;日志ID（自增主键）&#x27;</span>,</span><br><span class="line">    user_number    <span class="type">varchar</span>(<span class="number">50</span>)  <span class="keyword">NOT NULL</span> COMMENT <span class="string">&#x27;操作用户&#x27;</span>,</span><br><span class="line">    operation_time datetime     <span class="keyword">NOT NULL</span> COMMENT <span class="string">&#x27;操作时间&#x27;</span>,</span><br><span class="line">    <span class="keyword">module</span>         <span class="type">varchar</span>(<span class="number">100</span>) <span class="keyword">NOT NULL</span> COMMENT <span class="string">&#x27;操作模块（如：用户管理）&#x27;</span>,</span><br><span class="line">    operator       <span class="type">varchar</span>(<span class="number">255</span>)          <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span> COMMENT <span class="string">&#x27;操作描述（如：新增用户）&#x27;</span>,</span><br><span class="line">    <span class="keyword">method</span>         <span class="type">varchar</span>(<span class="number">255</span>) <span class="keyword">NOT NULL</span> COMMENT <span class="string">&#x27;操作方法全路径&#x27;</span>,</span><br><span class="line">    params         text COMMENT <span class="string">&#x27;方法参数（JSON格式）&#x27;</span>,</span><br><span class="line">    <span class="keyword">result</span>         text COMMENT <span class="string">&#x27;操作结果（成功/失败，JSON格式）&#x27;</span>,</span><br><span class="line">    exception      text COMMENT <span class="string">&#x27;异常信息（失败时记录）&#x27;</span>,</span><br><span class="line">    cost_time      <span class="type">bigint</span>                <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span> COMMENT <span class="string">&#x27;操作耗时（毫秒）&#x27;</span>,</span><br><span class="line">    client_ip      <span class="type">varchar</span>(<span class="number">50</span>)           <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span> COMMENT <span class="string">&#x27;客户端IP&#x27;</span>,</span><br><span class="line">    create_time    datetime     <span class="keyword">not null</span> <span class="keyword">default</span> <span class="built_in">current_timestamp</span> comment <span class="string">&#x27;创建时间&#x27;</span>,</span><br><span class="line">    <span class="keyword">PRIMARY KEY</span> (id),</span><br><span class="line">    KEY idx_operation_time (operation_time) COMMENT <span class="string">&#x27;按操作时间查询索引&#x27;</span>,</span><br><span class="line">    KEY idx_username (user_number) COMMENT <span class="string">&#x27;按用户查询索引&#x27;</span></span><br><span class="line">) COMMENT <span class="operator">=</span><span class="string">&#x27;系统操作日志表&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Data</span></span><br><span class="line"><span class="meta">@TableName(&quot;sys_operation_log&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Log</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 日志 id</span></span><br><span class="line">    <span class="meta">@TableId(type = IdType.AUTO)</span></span><br><span class="line">    <span class="keyword">private</span> <span class="type">int</span> id;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作用户</span></span><br><span class="line">    <span class="keyword">private</span> String userNumber;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作时间</span></span><br><span class="line">    <span class="meta">@JsonFormat(pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> LocalDateTime operationTime;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作模块</span></span><br><span class="line">    <span class="keyword">private</span> String <span class="keyword">module</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作名</span></span><br><span class="line">    <span class="keyword">private</span> String operator;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作方法全路径</span></span><br><span class="line">    <span class="keyword">private</span> String method;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 方法参数(JSON格式)</span></span><br><span class="line">    <span class="keyword">private</span> Object params;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作结果</span></span><br><span class="line">    <span class="keyword">private</span> Object result;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 异常信息(失败时记录)</span></span><br><span class="line">    <span class="keyword">private</span> String exception;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作耗时</span></span><br><span class="line">    <span class="keyword">private</span> Long costTime;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 客户端IP</span></span><br><span class="line">    <span class="keyword">private</span> String clientIp;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建时间</span></span><br><span class="line">    <span class="meta">@JsonFormat(pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> LocalDateTime createTime;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="四、编写切面类（核心）"><a href="#四、编写切面类（核心）" class="headerlink" title="四、编写切面类（核心）"></a>四、编写切面类（核心）</h2><p>为了让日志的保存和日志的提取分开来，先新建一个<code>LogHandler</code>接口</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">LogHandler</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 保存log实体</span></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">saveOperationLog</span><span class="params">(Log log)</span> <span class="keyword">throws</span> JsonProcessingException;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>再写<code>LogAspect</code>用于实现 AOP 提取日志</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@Aspect</span></span><br><span class="line"><span class="meta">@Slf4j</span></span><br><span class="line"><span class="meta">@RequiredArgsConstructor</span> <span class="comment">// 使用lombok自动注入所需的</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">LogAspect</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// Jackson</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> ObjectMapper objectMapper;</span><br><span class="line">    <span class="comment">// LogHandler</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> LogHandler logHandler;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 遇到 @LogAnnotation 的时候进行切入</span></span><br><span class="line">    <span class="meta">@Pointcut(&quot;@annotation(hiiii113.log.LogAnnotation)&quot;)</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">pointcut</span><span class="params">()</span></span><br><span class="line">    &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 环绕通知</span></span><br><span class="line">    <span class="meta">@Around(&quot;pointcut()&quot;)</span> <span class="comment">// 遇到pointcut()这个函数对应的注解的时候切入</span></span><br><span class="line">    <span class="keyword">public</span> Object <span class="title function_">around</span><span class="params">(ProceedingJoinPoint joinPoint)</span> <span class="keyword">throws</span> Throwable</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 记录方法开始时间</span></span><br><span class="line">        <span class="type">long</span> <span class="variable">startTime</span> <span class="operator">=</span> System.currentTimeMillis();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 初始化日志实体</span></span><br><span class="line">        <span class="type">Log</span> <span class="variable">logEntity</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Log</span>();</span><br><span class="line">        logEntity.setOperationTime(LocalDateTime.now()); <span class="comment">// 操作时间(当前时间)</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取客户端IP（从请求上下文获取）</span></span><br><span class="line">        <span class="type">ServletRequestAttributes</span> <span class="variable">requestAttributes</span> <span class="operator">=</span> (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();</span><br><span class="line">        <span class="keyword">if</span> (requestAttributes != <span class="literal">null</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="type">HttpServletRequest</span> <span class="variable">request</span> <span class="operator">=</span> requestAttributes.getRequest();</span><br><span class="line">            logEntity.setClientIp(request.getRemoteAddr()); <span class="comment">// 客户端IP</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取方法信息（全路径、参数）</span></span><br><span class="line">        <span class="type">MethodSignature</span> <span class="variable">signature</span> <span class="operator">=</span> (MethodSignature) joinPoint.getSignature();</span><br><span class="line">        <span class="type">Method</span> <span class="variable">method</span> <span class="operator">=</span> signature.getMethod();</span><br><span class="line">        <span class="comment">// 方法全路径：包名 + 类名 + 方法名</span></span><br><span class="line">        logEntity.setMethod(method.getDeclaringClass().getName() + <span class="string">&quot;.&quot;</span> + method.getName());</span><br><span class="line">        <span class="comment">// 方法参数：数组转字符串</span></span><br><span class="line">        logEntity.setParams(Arrays.toString(joinPoint.getArgs()));</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取@OperationLog注解信息</span></span><br><span class="line">        <span class="type">LogAnnotation</span> <span class="variable">logAnnotation</span> <span class="operator">=</span> method.getAnnotation(LogAnnotation.class);</span><br><span class="line">        logEntity.setModule(logAnnotation.<span class="keyword">module</span>());</span><br><span class="line">        logEntity.setOperator(logAnnotation.operator());</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取操作用户(使用 Sa-Token 的方法)</span></span><br><span class="line">        <span class="type">Object</span> <span class="variable">loginId</span> <span class="operator">=</span> StpUtil.getLoginIdDefaultNull();</span><br><span class="line">        logEntity.setUserNumber(loginId != <span class="literal">null</span> ? loginId.toString() : <span class="string">&quot;anonymous&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="type">Object</span> <span class="variable">businessResult</span> <span class="operator">=</span> <span class="literal">null</span>; <span class="comment">// 业务方法返回结果</span></span><br><span class="line">        <span class="keyword">try</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 执行目标业务方法（核心业务逻辑）</span></span><br><span class="line">            businessResult = joinPoint.proceed();</span><br><span class="line">            <span class="comment">// 方法执行成功：标记结果</span></span><br><span class="line">            logEntity.setResult(objectMapper.writeValueAsString(businessResult));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">catch</span> (Exception e)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 方法执行失败：记录异常信息</span></span><br><span class="line">            logEntity.setResult(<span class="string">&quot;失败&quot;</span>);</span><br><span class="line">            logEntity.setException(e.getMessage()); <span class="comment">// 异常信息（简化，可记录堆栈）</span></span><br><span class="line">            <span class="keyword">throw</span> e; <span class="comment">// 重新抛出异常，不影响原有业务异常处理逻辑</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">finally</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 计算操作耗时（结束时间-开始时间）</span></span><br><span class="line">            logEntity.setCostTime(System.currentTimeMillis() - startTime);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 8. 保存日志（调用业务模块实现的LogHandler）</span></span><br><span class="line">            saveOperationLog(logEntity);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 返回业务方法结果，不影响业务流程</span></span><br><span class="line">        <span class="keyword">return</span> businessResult;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">saveOperationLog</span><span class="params">(Log logEntity)</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">try</span></span><br><span class="line">        &#123;</span><br><span class="line">            logHandler.saveOperationLog(logEntity);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">catch</span> (Exception e)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 日志保存失败不影响主业务，仅记录日志告警</span></span><br><span class="line">            log.error(<span class="string">&quot;记录系统操作日志失败，日志信息：&#123;&#125;&quot;</span>, logEntity, e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>再写好保存 Log 实体到数据库的<code>LogHandlerImpl</code>实现类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@RequiredArgsConstructor</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">LogHandlerImpl</span> <span class="keyword">implements</span> <span class="title class_">LogHandler</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 注入</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> LogMapper logMapper;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> ObjectMapper objectMapper;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">saveOperationLog</span><span class="params">(Log log)</span> <span class="keyword">throws</span> JsonProcessingException</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 将Object类型的params/result序列化为JSON字符串</span></span><br><span class="line">        <span class="keyword">if</span> (log.getParams() != <span class="literal">null</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            log.setParams(objectMapper.writeValueAsString(log.getParams()));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (log.getResult() != <span class="literal">null</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            log.setResult(objectMapper.writeValueAsString(log.getResult()));</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 调用MyBatis Mapper插入数据库</span></span><br><span class="line">        logMapper.insert(log);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="五、使用"><a href="#五、使用" class="headerlink" title="五、使用"></a>五、使用</h2><p>只需要在需要记录日志的类、方法上面加上<code>@LogAnnotation</code>注解，即可生成日志</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 获取用户信息</span></span><br><span class="line"><span class="meta">@LogAnnotation(module = &quot;users&quot;, operator = &quot;获取用户信息&quot;)</span></span><br><span class="line"><span class="meta">@GetMapping(&quot;/info&quot;)</span></span><br><span class="line"><span class="meta">@SaCheckLogin</span></span><br><span class="line"><span class="keyword">public</span> Result&lt;User&gt; <span class="title function_">getUserInfo</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">String</span> <span class="variable">userNumber</span> <span class="operator">=</span> StpUtil.getLoginIdAsString();</span><br><span class="line">    <span class="type">User</span> <span class="variable">user</span> <span class="operator">=</span> userService.getOne(<span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;().eq(User::getUserNumber, userNumber));</span><br><span class="line">    <span class="keyword">return</span> Result.success(<span class="string">&quot;查询成功！&quot;</span>, user, <span class="number">200</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E4%BD%BF%E7%94%A8AOP%E5%AE%9E%E7%8E%B0%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/" data-id="cuidrcd2jlWKrSzkX9yPTykg6" data-title="使用AOP实现日志记录" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/Spring%E6%A0%B8%E5%BF%83%E6%80%9D%E6%83%B3/" id="article-nav-newer" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">前一篇</strong>
+      <div class="article-nav-title">
+        
+          Spring核心思想
+        
+      </div>
+    </a>
+  
+  
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/lambda%E8%AF%AD%E5%8F%A5%E4%BD%BF%E7%94%A8/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">后一篇</strong>
+      <div class="article-nav-title">lambda语句使用</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+
+  
+    
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2026/05/">五月 2026</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2026/05/04/add-frontmatter/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/">Go文件操作</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E5%9F%BA%E7%A1%80/">GO基础</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E6%8B%93%E5%B1%95/">Go 拓展</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/go/Go%E8%BF%9B%E9%98%B6/">GO进阶</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2026 John Doe<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.6.4.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
