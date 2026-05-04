@@ -77,145 +77,6 @@
       <div class="outer">
         <section id="main">
   
-    <article id="post-后端/使用AOP实现日志记录" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E4%BD%BF%E7%94%A8AOP%E5%AE%9E%E7%8E%B0%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/" class="article-date">
-  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E4%BD%BF%E7%94%A8AOP%E5%AE%9E%E7%8E%B0%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/">使用AOP实现日志记录</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <p>﻿# 使用AOP实现日志记录</p>
-<p>Spring 的核心思想之一 AOP （面向切面编程）的一个典型应用就是实现日志记录</p>
-<p>拥有了 AOP 后，无需在每个方法上添加输出日志的代码，即可实现日志记录，大大节省重复代码量</p>
-<blockquote>
-<p>这里使用的是 MYSQL 数据库保存日志实体，并借此实现查询日志的接口</p>
-</blockquote>
-<h2 id="一、安装依赖"><a href="#一、安装依赖" class="headerlink" title="一、安装依赖"></a>一、安装依赖</h2><p>本笔记使用的是 SpringBoot 实现，需要检查 <code>pom.xml</code> 中是否含有以下三项依赖：</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- Spring Boot Starter Web（包含 AOP） --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-web<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- AOP --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-aop<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- Lombok（省略 getter/setter 和日志声明） --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.projectlombok<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>lombok<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="二、编写注解"><a href="#二、编写注解" class="headerlink" title="二、编写注解"></a>二、编写注解</h2><p>我们需要编写自定义注解类，用于标识哪一个方法、类需要记录日志</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target(&#123;ElementType.METHOD&#125;)</span> <span class="comment">// 只作用于方法</span></span><br><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span> <span class="comment">// 运行时生效</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> LogAnnotation</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 模块名</span></span><br><span class="line">    String <span class="title function_">module</span><span class="params">()</span> <span class="keyword">default</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作名</span></span><br><span class="line">    String <span class="title function_">operator</span><span class="params">()</span> <span class="keyword">default</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>可以自行更改注解名和内含的信息，这里以<strong>模块–操作方法</strong>为例</p>
-</blockquote>
-<h2 id="三、编写日志表和对应实体"><a href="#三、编写日志表和对应实体" class="headerlink" title="三、编写日志表和对应实体"></a>三、编写日志表和对应实体</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 日志表</span></span><br><span class="line"><span class="keyword">CREATE TABLE</span> `sys_operation_log`</span><br><span class="line">(</span><br><span class="line">    id             <span class="type">int</span>          <span class="keyword">NOT NULL</span> AUTO_INCREMENT COMMENT <span class="string">&#x27;日志ID（自增主键）&#x27;</span>,</span><br><span class="line">    user_number    <span class="type">varchar</span>(<span class="number">50</span>)  <span class="keyword">NOT NULL</span> COMMENT <span class="string">&#x27;操作用户&#x27;</span>,</span><br><span class="line">    operation_time datetime     <span class="keyword">NOT NULL</span> COMMENT <span class="string">&#x27;操作时间&#x27;</span>,</span><br><span class="line">    <span class="keyword">module</span>         <span class="type">varchar</span>(<span class="number">100</span>) <span class="keyword">NOT NULL</span> COMMENT <span class="string">&#x27;操作模块（如：用户管理）&#x27;</span>,</span><br><span class="line">    operator       <span class="type">varchar</span>(<span class="number">255</span>)          <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span> COMMENT <span class="string">&#x27;操作描述（如：新增用户）&#x27;</span>,</span><br><span class="line">    <span class="keyword">method</span>         <span class="type">varchar</span>(<span class="number">255</span>) <span class="keyword">NOT NULL</span> COMMENT <span class="string">&#x27;操作方法全路径&#x27;</span>,</span><br><span class="line">    params         text COMMENT <span class="string">&#x27;方法参数（JSON格式）&#x27;</span>,</span><br><span class="line">    <span class="keyword">result</span>         text COMMENT <span class="string">&#x27;操作结果（成功/失败，JSON格式）&#x27;</span>,</span><br><span class="line">    exception      text COMMENT <span class="string">&#x27;异常信息（失败时记录）&#x27;</span>,</span><br><span class="line">    cost_time      <span class="type">bigint</span>                <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span> COMMENT <span class="string">&#x27;操作耗时（毫秒）&#x27;</span>,</span><br><span class="line">    client_ip      <span class="type">varchar</span>(<span class="number">50</span>)           <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span> COMMENT <span class="string">&#x27;客户端IP&#x27;</span>,</span><br><span class="line">    create_time    datetime     <span class="keyword">not null</span> <span class="keyword">default</span> <span class="built_in">current_timestamp</span> comment <span class="string">&#x27;创建时间&#x27;</span>,</span><br><span class="line">    <span class="keyword">PRIMARY KEY</span> (id),</span><br><span class="line">    KEY idx_operation_time (operation_time) COMMENT <span class="string">&#x27;按操作时间查询索引&#x27;</span>,</span><br><span class="line">    KEY idx_username (user_number) COMMENT <span class="string">&#x27;按用户查询索引&#x27;</span></span><br><span class="line">) COMMENT <span class="operator">=</span><span class="string">&#x27;系统操作日志表&#x27;</span>;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Data</span></span><br><span class="line"><span class="meta">@TableName(&quot;sys_operation_log&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Log</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 日志 id</span></span><br><span class="line">    <span class="meta">@TableId(type = IdType.AUTO)</span></span><br><span class="line">    <span class="keyword">private</span> <span class="type">int</span> id;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作用户</span></span><br><span class="line">    <span class="keyword">private</span> String userNumber;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作时间</span></span><br><span class="line">    <span class="meta">@JsonFormat(pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> LocalDateTime operationTime;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作模块</span></span><br><span class="line">    <span class="keyword">private</span> String <span class="keyword">module</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作名</span></span><br><span class="line">    <span class="keyword">private</span> String operator;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作方法全路径</span></span><br><span class="line">    <span class="keyword">private</span> String method;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 方法参数(JSON格式)</span></span><br><span class="line">    <span class="keyword">private</span> Object params;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作结果</span></span><br><span class="line">    <span class="keyword">private</span> Object result;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 异常信息(失败时记录)</span></span><br><span class="line">    <span class="keyword">private</span> String exception;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作耗时</span></span><br><span class="line">    <span class="keyword">private</span> Long costTime;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 客户端IP</span></span><br><span class="line">    <span class="keyword">private</span> String clientIp;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建时间</span></span><br><span class="line">    <span class="meta">@JsonFormat(pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> LocalDateTime createTime;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="四、编写切面类（核心）"><a href="#四、编写切面类（核心）" class="headerlink" title="四、编写切面类（核心）"></a>四、编写切面类（核心）</h2><p>为了让日志的保存和日志的提取分开来，先新建一个<code>LogHandler</code>接口</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">LogHandler</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 保存log实体</span></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">saveOperationLog</span><span class="params">(Log log)</span> <span class="keyword">throws</span> JsonProcessingException;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>再写<code>LogAspect</code>用于实现 AOP 提取日志</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@Aspect</span></span><br><span class="line"><span class="meta">@Slf4j</span></span><br><span class="line"><span class="meta">@RequiredArgsConstructor</span> <span class="comment">// 使用lombok自动注入所需的</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">LogAspect</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// Jackson</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> ObjectMapper objectMapper;</span><br><span class="line">    <span class="comment">// LogHandler</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> LogHandler logHandler;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 遇到 @LogAnnotation 的时候进行切入</span></span><br><span class="line">    <span class="meta">@Pointcut(&quot;@annotation(hiiii113.log.LogAnnotation)&quot;)</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">pointcut</span><span class="params">()</span></span><br><span class="line">    &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 环绕通知</span></span><br><span class="line">    <span class="meta">@Around(&quot;pointcut()&quot;)</span> <span class="comment">// 遇到pointcut()这个函数对应的注解的时候切入</span></span><br><span class="line">    <span class="keyword">public</span> Object <span class="title function_">around</span><span class="params">(ProceedingJoinPoint joinPoint)</span> <span class="keyword">throws</span> Throwable</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 记录方法开始时间</span></span><br><span class="line">        <span class="type">long</span> <span class="variable">startTime</span> <span class="operator">=</span> System.currentTimeMillis();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 初始化日志实体</span></span><br><span class="line">        <span class="type">Log</span> <span class="variable">logEntity</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Log</span>();</span><br><span class="line">        logEntity.setOperationTime(LocalDateTime.now()); <span class="comment">// 操作时间(当前时间)</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取客户端IP（从请求上下文获取）</span></span><br><span class="line">        <span class="type">ServletRequestAttributes</span> <span class="variable">requestAttributes</span> <span class="operator">=</span> (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();</span><br><span class="line">        <span class="keyword">if</span> (requestAttributes != <span class="literal">null</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="type">HttpServletRequest</span> <span class="variable">request</span> <span class="operator">=</span> requestAttributes.getRequest();</span><br><span class="line">            logEntity.setClientIp(request.getRemoteAddr()); <span class="comment">// 客户端IP</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取方法信息（全路径、参数）</span></span><br><span class="line">        <span class="type">MethodSignature</span> <span class="variable">signature</span> <span class="operator">=</span> (MethodSignature) joinPoint.getSignature();</span><br><span class="line">        <span class="type">Method</span> <span class="variable">method</span> <span class="operator">=</span> signature.getMethod();</span><br><span class="line">        <span class="comment">// 方法全路径：包名 + 类名 + 方法名</span></span><br><span class="line">        logEntity.setMethod(method.getDeclaringClass().getName() + <span class="string">&quot;.&quot;</span> + method.getName());</span><br><span class="line">        <span class="comment">// 方法参数：数组转字符串</span></span><br><span class="line">        logEntity.setParams(Arrays.toString(joinPoint.getArgs()));</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取@OperationLog注解信息</span></span><br><span class="line">        <span class="type">LogAnnotation</span> <span class="variable">logAnnotation</span> <span class="operator">=</span> method.getAnnotation(LogAnnotation.class);</span><br><span class="line">        logEntity.setModule(logAnnotation.<span class="keyword">module</span>());</span><br><span class="line">        logEntity.setOperator(logAnnotation.operator());</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取操作用户(使用 Sa-Token 的方法)</span></span><br><span class="line">        <span class="type">Object</span> <span class="variable">loginId</span> <span class="operator">=</span> StpUtil.getLoginIdDefaultNull();</span><br><span class="line">        logEntity.setUserNumber(loginId != <span class="literal">null</span> ? loginId.toString() : <span class="string">&quot;anonymous&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="type">Object</span> <span class="variable">businessResult</span> <span class="operator">=</span> <span class="literal">null</span>; <span class="comment">// 业务方法返回结果</span></span><br><span class="line">        <span class="keyword">try</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 执行目标业务方法（核心业务逻辑）</span></span><br><span class="line">            businessResult = joinPoint.proceed();</span><br><span class="line">            <span class="comment">// 方法执行成功：标记结果</span></span><br><span class="line">            logEntity.setResult(objectMapper.writeValueAsString(businessResult));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">catch</span> (Exception e)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 方法执行失败：记录异常信息</span></span><br><span class="line">            logEntity.setResult(<span class="string">&quot;失败&quot;</span>);</span><br><span class="line">            logEntity.setException(e.getMessage()); <span class="comment">// 异常信息（简化，可记录堆栈）</span></span><br><span class="line">            <span class="keyword">throw</span> e; <span class="comment">// 重新抛出异常，不影响原有业务异常处理逻辑</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">finally</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 计算操作耗时（结束时间-开始时间）</span></span><br><span class="line">            logEntity.setCostTime(System.currentTimeMillis() - startTime);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 8. 保存日志（调用业务模块实现的LogHandler）</span></span><br><span class="line">            saveOperationLog(logEntity);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 返回业务方法结果，不影响业务流程</span></span><br><span class="line">        <span class="keyword">return</span> businessResult;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">saveOperationLog</span><span class="params">(Log logEntity)</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">try</span></span><br><span class="line">        &#123;</span><br><span class="line">            logHandler.saveOperationLog(logEntity);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">catch</span> (Exception e)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 日志保存失败不影响主业务，仅记录日志告警</span></span><br><span class="line">            log.error(<span class="string">&quot;记录系统操作日志失败，日志信息：&#123;&#125;&quot;</span>, logEntity, e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>再写好保存 Log 实体到数据库的<code>LogHandlerImpl</code>实现类</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@RequiredArgsConstructor</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">LogHandlerImpl</span> <span class="keyword">implements</span> <span class="title class_">LogHandler</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 注入</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> LogMapper logMapper;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> ObjectMapper objectMapper;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">saveOperationLog</span><span class="params">(Log log)</span> <span class="keyword">throws</span> JsonProcessingException</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 将Object类型的params/result序列化为JSON字符串</span></span><br><span class="line">        <span class="keyword">if</span> (log.getParams() != <span class="literal">null</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            log.setParams(objectMapper.writeValueAsString(log.getParams()));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (log.getResult() != <span class="literal">null</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            log.setResult(objectMapper.writeValueAsString(log.getResult()));</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 调用MyBatis Mapper插入数据库</span></span><br><span class="line">        logMapper.insert(log);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="五、使用"><a href="#五、使用" class="headerlink" title="五、使用"></a>五、使用</h2><p>只需要在需要记录日志的类、方法上面加上<code>@LogAnnotation</code>注解，即可生成日志</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 获取用户信息</span></span><br><span class="line"><span class="meta">@LogAnnotation(module = &quot;users&quot;, operator = &quot;获取用户信息&quot;)</span></span><br><span class="line"><span class="meta">@GetMapping(&quot;/info&quot;)</span></span><br><span class="line"><span class="meta">@SaCheckLogin</span></span><br><span class="line"><span class="keyword">public</span> Result&lt;User&gt; <span class="title function_">getUserInfo</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">String</span> <span class="variable">userNumber</span> <span class="operator">=</span> StpUtil.getLoginIdAsString();</span><br><span class="line">    <span class="type">User</span> <span class="variable">user</span> <span class="operator">=</span> userService.getOne(<span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;().eq(User::getUserNumber, userNumber));</span><br><span class="line">    <span class="keyword">return</span> Result.success(<span class="string">&quot;查询成功！&quot;</span>, user, <span class="number">200</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E4%BD%BF%E7%94%A8AOP%E5%AE%9E%E7%8E%B0%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/" data-id="cuidRDuoe9lcvlpmWZa497KMK" data-title="使用AOP实现日志记录" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-后端/Vue路由设置" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/Vue%E8%B7%AF%E7%94%B1%E8%AE%BE%E7%BD%AE/" class="article-date">
-  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/Vue%E8%B7%AF%E7%94%B1%E8%AE%BE%E7%BD%AE/">Vue路由设置</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <p>﻿# Vue路由设置</p>
-<p>在前端写好了几个 Vue 组件并需要相互跳转时，需要手动设置路由</p>
-<p>示例：</p>
-<pre><code class="language-javascript">import {createRouter, createWebHistory} from &#39;vue-router&#39;  
-  
-const router = createRouter({  
-    history: createWebHistory(import.meta.env.BASE_URL),  
-    routes: [  
-        {   path: &#39;/&#39;,  		// 地址
-            alias: &#39;/login&#39;,  	// 别名，和地址的作用一样
-            name: &#39;login&#39;,  	// 名字
-            component: () =&gt; import(&#39;../views/Login.vue&#39;) // 懒加载
-        },  
-        {  
-            path: &#39;/register&#39;,  
-            name: &#39;register&#39;,  
-            component: () =&gt; import(&#39;../views/Register.vue&#39;)  
-        },
-        {  
-            path: &#39;/student&#39;,  
-            name: &#39;student&#39;,  
-            component: () =&gt; import(&#39;../views/StudentMenu.vue&#39;)  
-        },  
-        {  
-            path: &#39;/admin&#39;,  
-            name: &#39;admin&#39;,  
-            component: () =&gt; import(&#39;../views/AdminMenu.vue&#39;)  
-        },  
-    ],  
-})  
-
-// 导出
-export default router
-</code></pre>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/Vue%E8%B7%AF%E7%94%B1%E8%AE%BE%E7%BD%AE/" data-id="cuid99erS-28ihHm44SX7aP0X" data-title="Vue路由设置" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
     <article id="post-后端/lambda语句使用" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/lambda%E8%AF%AD%E5%8F%A5%E4%BD%BF%E7%94%A8/" class="article-date">
@@ -319,7 +180,163 @@ export default router
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/lambda%E8%AF%AD%E5%8F%A5%E4%BD%BF%E7%94%A8/" data-id="cuidivuPZkOkM5BlfN67gt15I" data-title="lambda语句使用" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/lambda%E8%AF%AD%E5%8F%A5%E4%BD%BF%E7%94%A8/" data-id="cuidM9Bx1E-z4LI6g6G7qis3V" data-title="lambda语句使用" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-后端/WebSocket" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/WebSocket/" class="article-date">
+  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/WebSocket/">WebSocket</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>﻿# WebSocket</p>
+<h2 id="一、简介"><a href="#一、简介" class="headerlink" title="一、简介"></a>一、简介</h2><p>WebSocket 是一种前端技术，设计用于提供<strong>低延时</strong>、<strong>全双工</strong>和<strong>长期运行</strong>的链接</p>
+<blockquote>
+<p>全双工：通信的两个参与方可以同时发送和接受数据，不需要等待双方的响应或传输完成</p>
+</blockquote>
+<p>更加形象的说：WebSocket 的出现就是为了解决实时通信的问题</p>
+<ul>
+<li><strong>传统通信</strong>：电子邮件、网页浏览等，存在延迟，需要用户主动请求来更新数据</li>
+<li><strong>实时通信</strong>：即时的消息传递、音视频通话、在线会议和实时数据传输等，可以实现即时的数据传输和交流，不需要用户主动请求或刷新来获取更新数据</li>
+</ul>
+<p>在 WebSocket 之前，主要有着这么几种方式用于解决实时通信：</p>
+<ul>
+<li><strong>轮询</strong>：客户端定期向服务器发送请求</li>
+<li><strong>长轮询</strong>：客户端发出请求后，保持链接打开，等待新数据响应后再关闭连接</li>
+<li><strong>Comet</strong>：保持长连接，在返回请求后继续保持连接打开</li>
+</ul>
+<p>所以总的来说，WebSocket 有着以下的优势：</p>
+<ul>
+<li><strong>双向实时通信</strong>：允许在单个、长时间的连接上进行双向实时通信，在需要快速实时更新的应用程序里，比 HTTP 更加高效</li>
+<li><strong>降低延迟</strong>：链接一旦建立便会保持开放，数据可以在客户端和服务器之间以比 HTTP 更低的延迟进行传输</li>
+<li><strong>更高效的资源利用</strong>：可以减少重复的请求和响应的开销，因为连接只需要建立一次</li>
+</ul>
+<h2 id="二、如何建立-WebSocket-连接"><a href="#二、如何建立-WebSocket-连接" class="headerlink" title="二、如何建立 WebSocket 连接"></a>二、如何建立 WebSocket 连接</h2><h3 id="1-WebSocket-的生命周期"><a href="#1-WebSocket-的生命周期" class="headerlink" title="1. WebSocket 的生命周期"></a>1. WebSocket 的生命周期</h3><p>在进行连接之前，我们需要知道 WebSocket 的生命周期，一个 WebSocket 连接包含以下四个主要阶段：</p>
+<ul>
+<li><strong>连接建立阶段（Connection Establishment）</strong>： 在这个阶段，客户端和服务器之间的 WebSocket 连接被建立。客户端发送一个 WebSocket 握手请求，服务器响应一个握手响应，然后连接就被建立了</li>
+<li><strong>连接开放阶段（Connection Open）</strong>： 在这个阶段，WebSocket 连接已经建立并开放，客户端和服务器可以在连接上互相发送数据</li>
+<li><strong>连接关闭阶段（Connection Closing）</strong>： 在这个阶段，一个 WebSocket 连接即将被关闭。它可以被客户端或服务器发起，通过发送一个关闭帧来关闭连接。</li>
+<li><strong>连接关闭完成阶段（Connection Closed）：</strong> 在这个阶段，WebSocket 连接已经完全关闭。客户端和服务器之间的任何交互都将无效</li>
+</ul>
+<blockquote>
+<p>需要注意的是，WebSocket 连接在任何时候都可能关闭，例如网络故障、服务器崩溃等情况都可能导致连接关闭。因此，需要及时处理 WebSocket 连接关闭的事件，以确保应用程序的可靠性和稳定性</p>
+</blockquote>
+<h3 id="2-WebSocket-的消息格式"><a href="#2-WebSocket-的消息格式" class="headerlink" title="2. WebSocket 的消息格式"></a>2. WebSocket 的消息格式</h3><p>WebSocket 消息格式由两个部分组成：消息头和消息体</p>
+<p>消息头包含以下信息：</p>
+<ul>
+<li><strong>FIN：</strong> 表示这是一条完整的消息，一般情况下都是1</li>
+<li><strong>RSV1、RSV2、RSV3：</strong> 暂时没有使用，一般都是0，只有当使用到了一些拓展服务的时候，才为1</li>
+<li><strong>Opcode：</strong> 表示消息的类型，包括文本消息、二进制消息等</li>
+<li><strong>Mask：</strong> 表示消息是否加密</li>
+<li><strong>Payload length：</strong> 表示消息体的长度</li>
+<li><strong>Masking key：</strong> 仅在消息需要加密时出现，用于对消息进行解密</li>
+</ul>
+<p>消息体就是实际传输的数据，可以是文本或二进制数据</p>
+<h3 id="3-WebSocket-的-API"><a href="#3-WebSocket-的-API" class="headerlink" title="3. WebSocket 的 API"></a>3. WebSocket 的 API</h3><p>WebSocket API 是用于在 Web 应用程序中创建和管理 WebSocket 连接的接口集合。WebSocket API 由浏览器原生支持，无需使用额外的 JavaScript 库或框架，可以直接在 JavaScript 中使用</p>
+<ul>
+<li><p><strong>WebSocket 构造函数</strong>：用于创建 WebSocket 对象，他接受一个 URL 作为参数，表示需要连接的 WebSocket 服务器的地址</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> ws = <span class="keyword">new</span> <span class="title class_">WebSocket</span>(<span class="string">&#x27;ws://example.com/ws&#x27;</span>);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong><code>WebSocket.send()</code> 方法</strong>：用于向服务器发送数据。它接受一个参数，表示要发送的数据。数据可以是字符串、Blob 对象或 ArrayBuffer 对象</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ws.<span class="title function_">send</span>(<span class="string">&#x27;Hello server!&#x27;</span>);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>WebSocket.onopen 事件</strong>： <code>WebSocket.onopen</code> 事件在 WebSocket 连接成功建立时触发</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ws.<span class="property">onopen</span> = <span class="keyword">function</span>(<span class="params"></span>) &#123;</span><br><span class="line">	<span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;WebSocket 连接已建立！&#x27;</span>);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>WebSocket.onmessage 事件</strong>： <code>WebSocket.onmessage</code> 事件在接收到服务器发送的消息时触发，它的 event 对象包含一个 data 属性，表示接收到的数据</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ws.<span class="property">onmessage</span> = <span class="keyword">function</span>(<span class="params">event</span>) &#123;</span><br><span class="line">	<span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;收到服务器消息：&#x27;</span>, event.<span class="property">data</span>);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>WebSocket.onerror 事件</strong>： <code>WebSocket.onerror</code> 事件在 WebSocket 连接出现错误时触发</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ws.<span class="property">onerror</span> = <span class="keyword">function</span>(<span class="params">event</span>) &#123;</span><br><span class="line">	<span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;WebSocket 连接出现错误！&#x27;</span>, event);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>WebSocket.onclose 事件</strong>： <code>WebSocket.onclose</code> 事件在 WebSocket 连接被关闭时触发</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ws.<span class="property">onclose</span> = <span class="keyword">function</span>(<span class="params"></span>) &#123;</span><br><span class="line">	<span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;WebSocket 连接已经关闭！&#x27;</span>);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="4-WebSocket-如何实现的连接？"><a href="#4-WebSocket-如何实现的连接？" class="headerlink" title="4. WebSocket 如何实现的连接？"></a>4. WebSocket 如何实现的连接？</h3><p>大体的思路就是：先发送一次常规的 GET 请求，并在请求头上的 Upgrade 上带上字段 websocket，即可升级为 WebSocket 请求</p>
+<p><img src="/assets/image-20260404212750580.png" alt="image-20260404212750580"></p>
+<h2 id="三、如何在-Java-中使用-WebSocket？"><a href="#三、如何在-Java-中使用-WebSocket？" class="headerlink" title="三、如何在 Java 中使用 WebSocket？"></a>三、如何在 Java 中使用 WebSocket？</h2><h3 id="1-导入依赖"><a href="#1-导入依赖" class="headerlink" title="1. 导入依赖"></a>1. 导入依赖</h3><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>javax.websocket<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>javax.websocket-api<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.1<span class="tag">&lt;/<span class="name">version</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-使用-Java-WebSocket-API-编写-WebSocket-服务端"><a href="#2-使用-Java-WebSocket-API-编写-WebSocket-服务端" class="headerlink" title="2. 使用 Java WebSocket API 编写 WebSocket 服务端"></a>2. 使用 Java WebSocket API 编写 WebSocket 服务端</h3><p>示例代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> javax.websocket.*;</span><br><span class="line"><span class="keyword">import</span> javax.websocket.server.ServerEndpoint;</span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"> </span><br><span class="line"><span class="meta">@ServerEndpoint(&quot;/echo&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">EchoServer</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="meta">@OnOpen</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onOpen</span><span class="params">(Session session)</span></span><br><span class="line">    &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;WebSocket 连接已经建立&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnMessage</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onMessage</span><span class="params">(String message, Session session)</span> <span class="keyword">throws</span> IOException</span><br><span class="line">    &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;收到客户端消息：&quot;</span> + message);</span><br><span class="line">        session.getBasicRemote().sendText(<span class="string">&quot;服务器收到消息：&quot;</span> + message);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnClose</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onClose</span><span class="params">()</span></span><br><span class="line">    &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;WebSocket 连接已经关闭&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnError</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onError</span><span class="params">(Throwable t)</span></span><br><span class="line">    &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;WebSocket 连接出现错误：&quot;</span> + t.getMessage());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在这个示例代码里面，定义了一个名为<code>echo</code>的 WebSocket 端点，它会监听客户端发来的消息，并将收到的消息返回给客户端</p>
+<p>具体来说，它使用了<code>@ServerEndpoint</code> 注解来指定 WebSocket 端点的 URL，使用了 <code>@OnOpen</code>、<code>@OnMessage</code>、<code>@OnClose</code> 和 <code>@OnError</code> 注解来定义 WebSocket 事件处理器</p>
+<p>同时这里给出一个 HTML&#x2F;JavaScript 客户端代码：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!DOCTYPE <span class="keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">&quot;UTF-8&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">title</span>&gt;</span>WebSocket Demo<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span>&gt;</span><span class="language-javascript"></span></span><br><span class="line"><span class="language-javascript">        <span class="keyword">var</span> ws = <span class="keyword">new</span> <span class="title class_">WebSocket</span>(<span class="string">&#x27;ws://localhost:8080/echo&#x27;</span>);</span></span><br><span class="line"><span class="language-javascript">        ws.<span class="property">onopen</span> = <span class="keyword">function</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="language-javascript">        &#123;</span></span><br><span class="line"><span class="language-javascript">            <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;WebSocket 连接已经建立。&#x27;</span>);</span></span><br><span class="line"><span class="language-javascript">            ws.<span class="title function_">send</span>(<span class="string">&#x27;Hello, server!&#x27;</span>);</span></span><br><span class="line"><span class="language-javascript">        &#125;;</span></span><br><span class="line"><span class="language-javascript">        ws.<span class="property">onmessage</span> = <span class="keyword">function</span>(<span class="params">event</span>)</span></span><br><span class="line"><span class="language-javascript">        &#123;</span></span><br><span class="line"><span class="language-javascript">            <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;收到服务器消息：&#x27;</span>, event.<span class="property">data</span>);</span></span><br><span class="line"><span class="language-javascript">        &#125;;</span></span><br><span class="line"><span class="language-javascript">        ws.<span class="property">onerror</span> = <span class="keyword">function</span>(<span class="params">event</span>)</span></span><br><span class="line"><span class="language-javascript">        &#123;</span></span><br><span class="line"><span class="language-javascript">            <span class="variable language_">console</span>.<span class="title function_">error</span>(<span class="string">&#x27;WebSocket 连接出现错误：&#x27;</span>, event);</span></span><br><span class="line"><span class="language-javascript">        &#125;;</span></span><br><span class="line"><span class="language-javascript">        ws.<span class="property">onclose</span> = <span class="keyword">function</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="language-javascript">        &#123;</span></span><br><span class="line"><span class="language-javascript">            <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;WebSocket 连接已经关闭。&#x27;</span>);</span></span><br><span class="line"><span class="language-javascript">        &#125;;</span></span><br><span class="line"><span class="language-javascript">    </span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">h1</span>&gt;</span>WebSocket Demo<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="3-使用-Java-WebSocket-API-编写-WebSocket-客户端"><a href="#3-使用-Java-WebSocket-API-编写-WebSocket-客户端" class="headerlink" title="3. 使用 Java WebSocket API 编写 WebSocket 客户端"></a>3. 使用 Java WebSocket API 编写 WebSocket 客户端</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> javax.websocket.*;</span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.net.URI;</span><br><span class="line"> </span><br><span class="line"><span class="meta">@ClientEndpoint</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">EchoClient</span> &#123;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">private</span> Session session;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnOpen</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onOpen</span><span class="params">(Session session)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;WebSocket 连接已经建立。&quot;</span>);</span><br><span class="line">        <span class="built_in">this</span>.session = session;</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnMessage</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onMessage</span><span class="params">(String message, Session session)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;收到服务器消息：&quot;</span> + message);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnClose</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onClose</span><span class="params">()</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;WebSocket 连接已经关闭。&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnError</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onError</span><span class="params">(Throwable t)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;WebSocket 连接出现错误：&quot;</span> + t.getMessage());</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">connect</span><span class="params">(String url)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="type">WebSocketContainer</span> <span class="variable">container</span> <span class="operator">=</span> ContainerProvider.getWebSocketContainer();</span><br><span class="line">        container.connectToServer(<span class="built_in">this</span>, <span class="keyword">new</span> <span class="title class_">URI</span>(url));</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">send</span><span class="params">(String message)</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        session.getBasicRemote().sendText(message);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">close</span><span class="params">()</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        session.close();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-使用-Spring-Boot-编写-WebSocket-服务端"><a href="#4-使用-Spring-Boot-编写-WebSocket-服务端" class="headerlink" title="4. 使用 Spring Boot 编写 WebSocket 服务端"></a>4. 使用 Spring Boot 编写 WebSocket 服务端</h3><h4 id="4-1-引入依赖"><a href="#4-1-引入依赖" class="headerlink" title="4.1 引入依赖"></a>4.1 引入依赖</h4><figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-websocket<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="4-2-配置-WebSocket"><a href="#4-2-配置-WebSocket" class="headerlink" title="4.2 配置 WebSocket"></a>4.2 配置 WebSocket</h4><p>创建一个类，并添加注解<code>@ServerEndpoint(&quot;/websocket&quot;)</code>，这将指定 WebSocket 服务端的端点</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> javax.websocket.OnClose;</span><br><span class="line"><span class="keyword">import</span> javax.websocket.OnMessage;</span><br><span class="line"><span class="keyword">import</span> javax.websocket.OnOpen;</span><br><span class="line"><span class="keyword">import</span> javax.websocket.Session;</span><br><span class="line"><span class="keyword">import</span> javax.websocket.server.ServerEndpoint;</span><br><span class="line"> </span><br><span class="line"><span class="meta">@ServerEndpoint(&quot;/websocket&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">WebSocketServer</span> &#123;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnOpen</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onOpen</span><span class="params">(Session session)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;Connection opened: &quot;</span> + session.getId());</span><br><span class="line">        sessions.add(session);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnMessage</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onMessage</span><span class="params">(Session session, String message)</span> <span class="keyword">throws</span> IOException &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;Received message: &quot;</span> + message);</span><br><span class="line">        session.getBasicRemote().sendText(<span class="string">&quot;Server received: &quot;</span> + message);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="meta">@OnClose</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onClose</span><span class="params">(Session session)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;Connection closed: &quot;</span> + session.getId());</span><br><span class="line">        sessions.remove(session);</span><br><span class="line">    &#125;</span><br><span class="line"> </span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> Set&lt;Session&gt; sessions = Collections.synchronizedSet(<span class="keyword">new</span> <span class="title class_">HashSet</span>&lt;Session&gt;());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="4-3-配置-WebSocket-支持"><a href="#4-3-配置-WebSocket-支持" class="headerlink" title="4.3 配置 WebSocket 支持"></a>4.3 配置 WebSocket 支持</h4><p>最后，需要配置 SpringBoot 以支持 WebSocket，建一个新的配置类，并添加注释<code>@Configuration</code>和<code>@EnableWebSocket</code>，然后，需要覆盖方法<code>registerWebSocketHandlers()</code>，并指定 WebSocket 处理程序</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@EnableWebSocket</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">WebSocketConfig</span> <span class="keyword">implements</span> <span class="title class_">WebSocketConfigurer</span> &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">registerWebSocketHandlers</span><span class="params">(WebSocketHandlerRegistry registry)</span> &#123;</span><br><span class="line">        registry.addHandler(<span class="keyword">new</span> <span class="title class_">WebSocketServer</span>(), <span class="string">&quot;/websocket&quot;</span>).setAllowedOrigins(<span class="string">&quot;*&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在此代码中，我们创建了一个新的<code>WebSocketServer</code>对象，并将其添加到WebSocket处理程序中。我们还指定了WebSocket端点（<code>/websocket</code>）和允许的来源（<code>*</code>）</p>
+<h2 id="四、WebSocket-的消息格式"><a href="#四、WebSocket-的消息格式" class="headerlink" title="四、WebSocket 的消息格式"></a>四、WebSocket 的消息格式</h2><h3 id="1-文本消息"><a href="#1-文本消息" class="headerlink" title="1. 文本消息"></a>1. 文本消息</h3><p>文本消息就是普通的 Unicode 文本字符串，服务器可以使用Session对象的<code>getBasicRemote()</code>方法来向客户端发送文本消息，客户端可以使用 WebSocket 的<code>send()</code>方法来向服务器发送文本消息</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">session.getBasicRemote().sendText(<span class="string">&quot;Hello, client!&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-二进制消息"><a href="#2-二进制消息" class="headerlink" title="2. 二进制消息"></a>2. 二进制消息</h3><p>二进制消息可以是任意类型的数据，包括图像、音频、视频等</p>
+<p>要向客户端发送二进制消息，服务器可以使用 Session 对象的<code>getBasicRemote()</code>方法，将消息作为 ByteBuffer 对象发送。客户端可以使用 WebSocket 的<code>send()</code>方法来向服务器发送二进制消息</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">byte</span>[] data = <span class="comment">// binary data</span></span><br><span class="line"><span class="type">ByteBuffer</span> <span class="variable">buffer</span> <span class="operator">=</span> ByteBuffer.wrap(data);</span><br><span class="line">session.getBasicRemote().sendBinary(buffer);</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-Ping-和-Pong-消息"><a href="#3-Ping-和-Pong-消息" class="headerlink" title="3. Ping 和 Pong 消息"></a>3. Ping 和 Pong 消息</h3><p>WebSocket还支持Ping和Pong消息类型，用于检测WebSocket连接是否仍然处于活动状态</p>
+<p>Ping消息由客户端发送到服务器，Pong消息由服务器发送回客户端作为响应。如果客户端在一段时间内没有收到Pong消息，则它可以假定WebSocket连接已断开，并关闭连接</p>
+<p>要发送Ping消息，请使用Session对象的<code>getBasicRemote()</code>方法，并将Ping消息作为ByteBuffer对象发送。客户端可以使用WebSocket的<code>sendPing()</code>方法来向服务器发送Ping消息</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">ByteBuffer</span> <span class="variable">pingMessage</span> <span class="operator">=</span> ByteBuffer.wrap(<span class="keyword">new</span> <span class="title class_">byte</span>[] &#123; <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span> &#125;);</span><br><span class="line">session.getBasicRemote().sendPing(pingMessage);</span><br></pre></td></tr></table></figure>
+
+<p>要接收Pong消息，请在您的WebSocket处理程序中实现<code>onPong()</code>方法。当您的WebSocket服务器接收到Pong消息时，它将自动调用此方法，并将接收到的Pong消息作为ByteBuffer对象传递给它</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@OnMessage</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onPong</span><span class="params">(Session session, ByteBuffer pongMessage)</span> &#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Received Pong message: &quot;</span> + pongMessage);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>请注意，Ping和Pong消息通常用于WebSocket连接的健康检查。如果您希望在WebSocket连接中使用此功能，则应定期发送Ping消息并等待Pong消息的响应</p>
+<h3 id="4-关闭消息"><a href="#4-关闭消息" class="headerlink" title="4. 关闭消息"></a>4. 关闭消息</h3><p>WebSocket还支持关闭消息类型，用于关闭WebSocket连接。关闭消息可以由客户端或服务器发起，并且可以携带一个可选的状态码和关闭原因。当WebSocket连接关闭时，客户端和服务器都应该发送一个关闭消息以结束连接</p>
+<p>要发送关闭消息，请使用Session对象的<code>getBasicRemote()</code>方法，并调用它的<code>sendClose()</code>方法。关闭消息可以携带一个可选的状态码和关闭原因。如果您不希望发送状态码或关闭原因，则可以将它们设置为0和null</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">session.close(<span class="keyword">new</span> <span class="title class_">CloseReason</span>(CloseReason.CloseCodes.NORMAL_CLOSURE, <span class="string">&quot;Closing from client.&quot;</span>));</span><br></pre></td></tr></table></figure>
+
+<p>要处理接收到的关闭消息，请在您的WebSocket处理程序中实现<code>onClose()</code>方法。当您的WebSocket服务器接收到关闭消息时，它将自动调用此方法，并将接收到的状态码和关闭原因传递给它</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@OnClose</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onClose</span><span class="params">(Session session, CloseReason closeReason)</span> &#123;</span><br><span class="line">    System.out.println(<span class="string">&quot;Connection closed: &quot;</span> + closeReason.getCloseCode() + <span class="string">&quot; - &quot;</span> + closeReason.getReasonPhrase());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>请注意，客户端和服务器都应该发送关闭消息以结束WebSocket连接。如果只有一方发送了关闭消息，则另一方可能无法正确地关闭连接，并且可能需要等待超时才能释放资源。建议客户端和服务器在关闭连接时都发送关闭消息，以确保连接正确地关闭</p>
+<h2 id="五、为什么需要心跳机制？"><a href="#五、为什么需要心跳机制？" class="headerlink" title="五、为什么需要心跳机制？"></a>五、为什么需要心跳机制？</h2><p>为了保持 WebSocket 稳定的长连接，在连接建立之后，服务器和客户端之间通过心跳包来保持链接状态，以防止连接因为长时间没有数据而被切断</p>
+<p>具体方式是：服务器和客户端之间通过心跳包（也就是一种特殊的数据包，不包含任何实际数据，仅用来维持连接状态）来定期发送一个空的数据帧来确保双方之间的连接是否有效</p>
+<p>如果一段时间内没有接收到心跳包，就可以认为连接断开，需要重新建立连接</p>
+<h2 id="四、WebSocket-的限制"><a href="#四、WebSocket-的限制" class="headerlink" title="四、WebSocket 的限制"></a>四、WebSocket 的限制</h2><ol>
+<li><strong>没有加密功能</strong>：如果有安全需求，需要使用其他方式（SSL协议或者设置黑白名单）</li>
+<li><strong>不支持古老的浏览器</strong>：不支持 IE10 之前的版本</li>
+<li><strong>优化很重要</strong>：保持长连接需要服务器不断的维护和处理连接状态，需要优化性能</li>
+</ol>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/WebSocket/" data-id="cuidkcJhuG2kqA3O6TyVURc4s" data-title="WebSocket" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -621,7 +638,127 @@ export default router
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%89%8D%E5%90%8E%E7%AB%AF%E4%BA%A4%E4%BA%92%E7%AC%94%E8%AE%B0/" data-id="cuidr8q_cyqDxAYS1_5sT5T4P" data-title="前后端交互笔记" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%89%8D%E5%90%8E%E7%AB%AF%E4%BA%A4%E4%BA%92%E7%AC%94%E8%AE%B0/" data-id="cuidalRBL5qDp6pPEoM_X-Cb1" data-title="前后端交互笔记" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-后端/使用AOP实现日志记录" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E4%BD%BF%E7%94%A8AOP%E5%AE%9E%E7%8E%B0%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/" class="article-date">
+  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E4%BD%BF%E7%94%A8AOP%E5%AE%9E%E7%8E%B0%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/">使用AOP实现日志记录</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>﻿# 使用AOP实现日志记录</p>
+<p>Spring 的核心思想之一 AOP （面向切面编程）的一个典型应用就是实现日志记录</p>
+<p>拥有了 AOP 后，无需在每个方法上添加输出日志的代码，即可实现日志记录，大大节省重复代码量</p>
+<blockquote>
+<p>这里使用的是 MYSQL 数据库保存日志实体，并借此实现查询日志的接口</p>
+</blockquote>
+<h2 id="一、安装依赖"><a href="#一、安装依赖" class="headerlink" title="一、安装依赖"></a>一、安装依赖</h2><p>本笔记使用的是 SpringBoot 实现，需要检查 <code>pom.xml</code> 中是否含有以下三项依赖：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- Spring Boot Starter Web（包含 AOP） --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-web<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- AOP --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-aop<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- Lombok（省略 getter/setter 和日志声明） --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.projectlombok<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>lombok<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="二、编写注解"><a href="#二、编写注解" class="headerlink" title="二、编写注解"></a>二、编写注解</h2><p>我们需要编写自定义注解类，用于标识哪一个方法、类需要记录日志</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target(&#123;ElementType.METHOD&#125;)</span> <span class="comment">// 只作用于方法</span></span><br><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span> <span class="comment">// 运行时生效</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> LogAnnotation</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 模块名</span></span><br><span class="line">    String <span class="title function_">module</span><span class="params">()</span> <span class="keyword">default</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作名</span></span><br><span class="line">    String <span class="title function_">operator</span><span class="params">()</span> <span class="keyword">default</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>可以自行更改注解名和内含的信息，这里以<strong>模块–操作方法</strong>为例</p>
+</blockquote>
+<h2 id="三、编写日志表和对应实体"><a href="#三、编写日志表和对应实体" class="headerlink" title="三、编写日志表和对应实体"></a>三、编写日志表和对应实体</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 日志表</span></span><br><span class="line"><span class="keyword">CREATE TABLE</span> `sys_operation_log`</span><br><span class="line">(</span><br><span class="line">    id             <span class="type">int</span>          <span class="keyword">NOT NULL</span> AUTO_INCREMENT COMMENT <span class="string">&#x27;日志ID（自增主键）&#x27;</span>,</span><br><span class="line">    user_number    <span class="type">varchar</span>(<span class="number">50</span>)  <span class="keyword">NOT NULL</span> COMMENT <span class="string">&#x27;操作用户&#x27;</span>,</span><br><span class="line">    operation_time datetime     <span class="keyword">NOT NULL</span> COMMENT <span class="string">&#x27;操作时间&#x27;</span>,</span><br><span class="line">    <span class="keyword">module</span>         <span class="type">varchar</span>(<span class="number">100</span>) <span class="keyword">NOT NULL</span> COMMENT <span class="string">&#x27;操作模块（如：用户管理）&#x27;</span>,</span><br><span class="line">    operator       <span class="type">varchar</span>(<span class="number">255</span>)          <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span> COMMENT <span class="string">&#x27;操作描述（如：新增用户）&#x27;</span>,</span><br><span class="line">    <span class="keyword">method</span>         <span class="type">varchar</span>(<span class="number">255</span>) <span class="keyword">NOT NULL</span> COMMENT <span class="string">&#x27;操作方法全路径&#x27;</span>,</span><br><span class="line">    params         text COMMENT <span class="string">&#x27;方法参数（JSON格式）&#x27;</span>,</span><br><span class="line">    <span class="keyword">result</span>         text COMMENT <span class="string">&#x27;操作结果（成功/失败，JSON格式）&#x27;</span>,</span><br><span class="line">    exception      text COMMENT <span class="string">&#x27;异常信息（失败时记录）&#x27;</span>,</span><br><span class="line">    cost_time      <span class="type">bigint</span>                <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span> COMMENT <span class="string">&#x27;操作耗时（毫秒）&#x27;</span>,</span><br><span class="line">    client_ip      <span class="type">varchar</span>(<span class="number">50</span>)           <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span> COMMENT <span class="string">&#x27;客户端IP&#x27;</span>,</span><br><span class="line">    create_time    datetime     <span class="keyword">not null</span> <span class="keyword">default</span> <span class="built_in">current_timestamp</span> comment <span class="string">&#x27;创建时间&#x27;</span>,</span><br><span class="line">    <span class="keyword">PRIMARY KEY</span> (id),</span><br><span class="line">    KEY idx_operation_time (operation_time) COMMENT <span class="string">&#x27;按操作时间查询索引&#x27;</span>,</span><br><span class="line">    KEY idx_username (user_number) COMMENT <span class="string">&#x27;按用户查询索引&#x27;</span></span><br><span class="line">) COMMENT <span class="operator">=</span><span class="string">&#x27;系统操作日志表&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Data</span></span><br><span class="line"><span class="meta">@TableName(&quot;sys_operation_log&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Log</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 日志 id</span></span><br><span class="line">    <span class="meta">@TableId(type = IdType.AUTO)</span></span><br><span class="line">    <span class="keyword">private</span> <span class="type">int</span> id;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作用户</span></span><br><span class="line">    <span class="keyword">private</span> String userNumber;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作时间</span></span><br><span class="line">    <span class="meta">@JsonFormat(pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> LocalDateTime operationTime;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作模块</span></span><br><span class="line">    <span class="keyword">private</span> String <span class="keyword">module</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作名</span></span><br><span class="line">    <span class="keyword">private</span> String operator;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作方法全路径</span></span><br><span class="line">    <span class="keyword">private</span> String method;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 方法参数(JSON格式)</span></span><br><span class="line">    <span class="keyword">private</span> Object params;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作结果</span></span><br><span class="line">    <span class="keyword">private</span> Object result;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 异常信息(失败时记录)</span></span><br><span class="line">    <span class="keyword">private</span> String exception;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作耗时</span></span><br><span class="line">    <span class="keyword">private</span> Long costTime;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 客户端IP</span></span><br><span class="line">    <span class="keyword">private</span> String clientIp;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建时间</span></span><br><span class="line">    <span class="meta">@JsonFormat(pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> LocalDateTime createTime;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="四、编写切面类（核心）"><a href="#四、编写切面类（核心）" class="headerlink" title="四、编写切面类（核心）"></a>四、编写切面类（核心）</h2><p>为了让日志的保存和日志的提取分开来，先新建一个<code>LogHandler</code>接口</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">LogHandler</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 保存log实体</span></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">saveOperationLog</span><span class="params">(Log log)</span> <span class="keyword">throws</span> JsonProcessingException;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>再写<code>LogAspect</code>用于实现 AOP 提取日志</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@Aspect</span></span><br><span class="line"><span class="meta">@Slf4j</span></span><br><span class="line"><span class="meta">@RequiredArgsConstructor</span> <span class="comment">// 使用lombok自动注入所需的</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">LogAspect</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// Jackson</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> ObjectMapper objectMapper;</span><br><span class="line">    <span class="comment">// LogHandler</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> LogHandler logHandler;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 遇到 @LogAnnotation 的时候进行切入</span></span><br><span class="line">    <span class="meta">@Pointcut(&quot;@annotation(hiiii113.log.LogAnnotation)&quot;)</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">pointcut</span><span class="params">()</span></span><br><span class="line">    &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 环绕通知</span></span><br><span class="line">    <span class="meta">@Around(&quot;pointcut()&quot;)</span> <span class="comment">// 遇到pointcut()这个函数对应的注解的时候切入</span></span><br><span class="line">    <span class="keyword">public</span> Object <span class="title function_">around</span><span class="params">(ProceedingJoinPoint joinPoint)</span> <span class="keyword">throws</span> Throwable</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 记录方法开始时间</span></span><br><span class="line">        <span class="type">long</span> <span class="variable">startTime</span> <span class="operator">=</span> System.currentTimeMillis();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 初始化日志实体</span></span><br><span class="line">        <span class="type">Log</span> <span class="variable">logEntity</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Log</span>();</span><br><span class="line">        logEntity.setOperationTime(LocalDateTime.now()); <span class="comment">// 操作时间(当前时间)</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取客户端IP（从请求上下文获取）</span></span><br><span class="line">        <span class="type">ServletRequestAttributes</span> <span class="variable">requestAttributes</span> <span class="operator">=</span> (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();</span><br><span class="line">        <span class="keyword">if</span> (requestAttributes != <span class="literal">null</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="type">HttpServletRequest</span> <span class="variable">request</span> <span class="operator">=</span> requestAttributes.getRequest();</span><br><span class="line">            logEntity.setClientIp(request.getRemoteAddr()); <span class="comment">// 客户端IP</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取方法信息（全路径、参数）</span></span><br><span class="line">        <span class="type">MethodSignature</span> <span class="variable">signature</span> <span class="operator">=</span> (MethodSignature) joinPoint.getSignature();</span><br><span class="line">        <span class="type">Method</span> <span class="variable">method</span> <span class="operator">=</span> signature.getMethod();</span><br><span class="line">        <span class="comment">// 方法全路径：包名 + 类名 + 方法名</span></span><br><span class="line">        logEntity.setMethod(method.getDeclaringClass().getName() + <span class="string">&quot;.&quot;</span> + method.getName());</span><br><span class="line">        <span class="comment">// 方法参数：数组转字符串</span></span><br><span class="line">        logEntity.setParams(Arrays.toString(joinPoint.getArgs()));</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取@OperationLog注解信息</span></span><br><span class="line">        <span class="type">LogAnnotation</span> <span class="variable">logAnnotation</span> <span class="operator">=</span> method.getAnnotation(LogAnnotation.class);</span><br><span class="line">        logEntity.setModule(logAnnotation.<span class="keyword">module</span>());</span><br><span class="line">        logEntity.setOperator(logAnnotation.operator());</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取操作用户(使用 Sa-Token 的方法)</span></span><br><span class="line">        <span class="type">Object</span> <span class="variable">loginId</span> <span class="operator">=</span> StpUtil.getLoginIdDefaultNull();</span><br><span class="line">        logEntity.setUserNumber(loginId != <span class="literal">null</span> ? loginId.toString() : <span class="string">&quot;anonymous&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="type">Object</span> <span class="variable">businessResult</span> <span class="operator">=</span> <span class="literal">null</span>; <span class="comment">// 业务方法返回结果</span></span><br><span class="line">        <span class="keyword">try</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 执行目标业务方法（核心业务逻辑）</span></span><br><span class="line">            businessResult = joinPoint.proceed();</span><br><span class="line">            <span class="comment">// 方法执行成功：标记结果</span></span><br><span class="line">            logEntity.setResult(objectMapper.writeValueAsString(businessResult));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">catch</span> (Exception e)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 方法执行失败：记录异常信息</span></span><br><span class="line">            logEntity.setResult(<span class="string">&quot;失败&quot;</span>);</span><br><span class="line">            logEntity.setException(e.getMessage()); <span class="comment">// 异常信息（简化，可记录堆栈）</span></span><br><span class="line">            <span class="keyword">throw</span> e; <span class="comment">// 重新抛出异常，不影响原有业务异常处理逻辑</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">finally</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 计算操作耗时（结束时间-开始时间）</span></span><br><span class="line">            logEntity.setCostTime(System.currentTimeMillis() - startTime);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 8. 保存日志（调用业务模块实现的LogHandler）</span></span><br><span class="line">            saveOperationLog(logEntity);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 返回业务方法结果，不影响业务流程</span></span><br><span class="line">        <span class="keyword">return</span> businessResult;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">saveOperationLog</span><span class="params">(Log logEntity)</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">try</span></span><br><span class="line">        &#123;</span><br><span class="line">            logHandler.saveOperationLog(logEntity);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">catch</span> (Exception e)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 日志保存失败不影响主业务，仅记录日志告警</span></span><br><span class="line">            log.error(<span class="string">&quot;记录系统操作日志失败，日志信息：&#123;&#125;&quot;</span>, logEntity, e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>再写好保存 Log 实体到数据库的<code>LogHandlerImpl</code>实现类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@RequiredArgsConstructor</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">LogHandlerImpl</span> <span class="keyword">implements</span> <span class="title class_">LogHandler</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 注入</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> LogMapper logMapper;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> ObjectMapper objectMapper;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">saveOperationLog</span><span class="params">(Log log)</span> <span class="keyword">throws</span> JsonProcessingException</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 将Object类型的params/result序列化为JSON字符串</span></span><br><span class="line">        <span class="keyword">if</span> (log.getParams() != <span class="literal">null</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            log.setParams(objectMapper.writeValueAsString(log.getParams()));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (log.getResult() != <span class="literal">null</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            log.setResult(objectMapper.writeValueAsString(log.getResult()));</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 调用MyBatis Mapper插入数据库</span></span><br><span class="line">        logMapper.insert(log);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="五、使用"><a href="#五、使用" class="headerlink" title="五、使用"></a>五、使用</h2><p>只需要在需要记录日志的类、方法上面加上<code>@LogAnnotation</code>注解，即可生成日志</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 获取用户信息</span></span><br><span class="line"><span class="meta">@LogAnnotation(module = &quot;users&quot;, operator = &quot;获取用户信息&quot;)</span></span><br><span class="line"><span class="meta">@GetMapping(&quot;/info&quot;)</span></span><br><span class="line"><span class="meta">@SaCheckLogin</span></span><br><span class="line"><span class="keyword">public</span> Result&lt;User&gt; <span class="title function_">getUserInfo</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">String</span> <span class="variable">userNumber</span> <span class="operator">=</span> StpUtil.getLoginIdAsString();</span><br><span class="line">    <span class="type">User</span> <span class="variable">user</span> <span class="operator">=</span> userService.getOne(<span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;().eq(User::getUserNumber, userNumber));</span><br><span class="line">    <span class="keyword">return</span> Result.success(<span class="string">&quot;查询成功！&quot;</span>, user, <span class="number">200</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E4%BD%BF%E7%94%A8AOP%E5%AE%9E%E7%8E%B0%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/" data-id="cuid9OaL-nr1eA2U5y6EskD_R" data-title="使用AOP实现日志记录" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-后端/密码加密" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%AF%86%E7%A0%81%E5%8A%A0%E5%AF%86/" class="article-date">
+  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%AF%86%E7%A0%81%E5%8A%A0%E5%AF%86/">密码加密</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>﻿# 密码加密</p>
+<p>后端存储和使用密码时需要注意安全性问题</p>
+<h3 id="1-密码加密"><a href="#1-密码加密" class="headerlink" title="1. 密码加密"></a>1. 密码加密</h3><p>可以使用 <strong>BCrypt 密码加密</strong>对密码进行加密处理</p>
+<p>导入依赖：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-security<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span>  </span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>创建自定义类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">PasswordUtil</span>  </span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 注册静态对象  </span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">BCryptPasswordEncoder</span> <span class="variable">encoder</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">BCryptPasswordEncoder</span>();  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 加密  </span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> String <span class="title function_">encode</span><span class="params">(String rawPassword)</span>  </span><br><span class="line">    &#123;  </span><br><span class="line">        <span class="keyword">return</span> encoder.encode(rawPassword);  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 校验  </span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="type">boolean</span> <span class="title function_">matches</span><span class="params">(String rawPassword, String encodedPassword)</span>  </span><br><span class="line">    &#123;  </span><br><span class="line">        <span class="keyword">return</span> encoder.matches(rawPassword, encodedPassword);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>原理：存储的时候使用加密存入加密后字符串，需要校验的时候，算法提取出盐值并对输入的密码进行加密，和加密好的进行对比即可</strong></p>
+<p><strong>由于该算法无法解密，拥有很高的安全性</strong></p>
+<h3 id="2-返回给前端时排除密码"><a href="#2-返回给前端时排除密码" class="headerlink" title="2. 返回给前端时排除密码"></a>2. 返回给前端时排除密码</h3><p>如果在后端是直接返回 User 对象，需要在 password 字段前面加上注解</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 密码（加密后）  </span></span><br><span class="line"><span class="meta">@JsonIgnore</span></span><br><span class="line"><span class="keyword">private</span> String password;</span><br></pre></td></tr></table></figure>
+
+<p>防止被序列化，这样返回给前端的数据就不带有密码了</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%AF%86%E7%A0%81%E5%8A%A0%E5%AF%86/" data-id="cuid2tvIp9BtYmmBXcndxdrb3" data-title="密码加密" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -689,7 +826,132 @@ export default router
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%9B%BE%E7%89%87%E7%9A%84%E4%B8%8A%E4%BC%A0/" data-id="cuidIkBA0C-sJGDFWpBsbhmw_" data-title="图片的上传" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%9B%BE%E7%89%87%E7%9A%84%E4%B8%8A%E4%BC%A0/" data-id="cuiduaiMMCjbOdWV0KdcOXWQt" data-title="图片的上传" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-后端/注解的使用" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%B3%A8%E8%A7%A3%E7%9A%84%E4%BD%BF%E7%94%A8/" class="article-date">
+  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%B3%A8%E8%A7%A3%E7%9A%84%E4%BD%BF%E7%94%A8/">注解的使用</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>﻿# 注解的使用</p>
+<p>在实际编写中，我们可能需要给某一个类、方法、成员函数上面加上注解</p>
+<p>比如用于标识&#x3D;&#x3D;方法重写&#x3D;&#x3D;的<code>@override</code>等等</p>
+<p>这里主要记录<strong>如何自定义注解</strong>以及<strong>如何使用</strong></p>
+<h2 id="1-注解的创建"><a href="#1-注解的创建" class="headerlink" title="1. 注解的创建"></a>1. 注解的创建</h2><p>在 idea 里面，可以直接选择创建一个注解</p>
+<p>这里给出一个简单的注解示例代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span>  </span><br><span class="line"><span class="meta">@Target(ElementType.PARAMETER)</span>  </span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> Param  </span><br><span class="line">&#123;  </span><br><span class="line">    String <span class="title function_">value</span><span class="params">()</span>;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-注解的属性"><a href="#2-注解的属性" class="headerlink" title="2. 注解的属性"></a>2. 注解的属性</h2><p>注解其实就类似于一个说明书，我们可以在类、方法、成员函数上面加上注解，然后来获取相关注解的信息</p>
+<p>其中注解有两个属性</p>
+<ul>
+<li>可以加在哪？（Target）</li>
+<li>存在多久？（Retention）</li>
+</ul>
+<p>以及一个用于读取注解的方法：Reflection（反射）</p>
+<h3 id="2-1-Target"><a href="#2-1-Target" class="headerlink" title="2.1 Target"></a>2.1 Target</h3><p>Target 属性是用于指定这个注解可以贴在哪里的，如果不指定，默认可以贴在任何地方</p>
+<p>Target 的设置示例代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target(&#123;ElementType.METHOD, ElementType.FIELD&#125;)</span></span><br></pre></td></tr></table></figure>
+
+<p>其中有几个<strong>常用值</strong>：</p>
+<ul>
+<li><code>ElementType.TYPE</code>：类、接口、注解、枚举</li>
+<li><code>ElementType.METHOD</code>：方法</li>
+<li><code>ElementType.FIELD</code>：成员变量（属性）</li>
+<li><code>ElementType.PARAMETER</code>：方法的参数</li>
+</ul>
+<p>通过设定以上几个值，就可以指定这个注解可以贴的位置</p>
+<h3 id="2-2-Retention"><a href="#2-2-Retention" class="headerlink" title="2.2 Retention"></a>2.2 Retention</h3><p>Retention 这个属性决定了这个注解的存活周期</p>
+<p>写法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span></span><br></pre></td></tr></table></figure>
+
+<p>Retention 有三种级别：</p>
+<ol>
+<li><code>RetentionPolicy.SOURCE</code>：<strong>编译期丢弃</strong>，只用于给编译期看（比如<code>@Override</code>）</li>
+<li><code>RetentionPolicy.CLASS</code>：<strong>类加载时丢弃</strong>，可以存在于 <code>.class</code> 文件中，但是不会被加载到内存</li>
+<li><code>RetentionPolicy.RUNTIME</code>：<strong>运行期保留</strong>，这是<strong>框架</strong>唯一能读取到的级别，如果想通过反射读取，必须选这个</li>
+</ol>
+<h3 id="2-3-存放与获取"><a href="#2-3-存放与获取" class="headerlink" title="2.3 存放与获取"></a>2.3 存放与获取</h3><p>注解不仅仅是给类、方法、成员函数带上一个标签，更重要的是，注解可以存放一些成员变量，可以让调用者获取</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Table(name = &quot;user_table&quot;)</span> <span class="comment">// 自定义注解 public class User</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">private</span> String name;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>像这样，在注解定义的时候如果有<strong>成员变量</strong>，就可以在注解后的括号内<strong>赋值</strong></p>
+<p>我们可以使用<strong>反射</strong>（Reflection）来获取</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ReflectionDemo</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 1. 获取 Class 对象</span></span><br><span class="line">        Class&lt;User&gt; clazz = User.class;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 2. 检查类上有没有 @Table 注解</span></span><br><span class="line">        <span class="keyword">if</span> (clazz.isAnnotationPresent(Table.class))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 3. 获取该注解对象</span></span><br><span class="line">            <span class="type">Table</span> <span class="variable">table</span> <span class="operator">=</span> clazz.getAnnotation(Table.class);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 4. 读取注解里的属性值（这就是反射的魔力）</span></span><br><span class="line">            <span class="type">String</span> <span class="variable">tableName</span> <span class="operator">=</span> table.name();</span><br><span class="line">            System.out.println(<span class="string">&quot;成功读到数据库表名: &quot;</span> + tableName);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>通过这样，我们就获取了一个注解中包含的东西</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%B3%A8%E8%A7%A3%E7%9A%84%E4%BD%BF%E7%94%A8/" data-id="cuidvLJRiYJDCuOcxM4p9KHjv" data-title="注解的使用" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-后端/跨域问题" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E8%B7%A8%E5%9F%9F%E9%97%AE%E9%A2%98/" class="article-date">
+  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E8%B7%A8%E5%9F%9F%E9%97%AE%E9%A2%98/">跨域问题</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>﻿# 跨域问题</p>
+<p>浏览器的<strong>同源策略</strong>会阻止网页向不同源（协议、域名、端口任一不同）的服务器发起请求。CORS 是一种机制，允许服务器通过添加特定的响应头来声明哪些跨域请求是被允许的。如果服务端没有正确配置 CORS，跨域请求（例如前端域名 <code>http://localhost:3000</code> 调用后端 <code>http://localhost:8080</code> 的 API）会被浏览器拦截。</p>
+<p>所以我们需要手动设置<strong>跨域访问</strong></p>
+<p>示例：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">SecurityConfig</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// CORS 配置</span></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="keyword">public</span> CorsFilter <span class="title function_">corsFilter</span><span class="params">()</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 创建 CORS 配置对象</span></span><br><span class="line">        <span class="type">CorsConfiguration</span> <span class="variable">config</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">CorsConfiguration</span>();</span><br><span class="line"></span><br><span class="line">        config.addAllowedOriginPattern(<span class="string">&quot;*&quot;</span>);       <span class="comment">// 允许所有域名</span></span><br><span class="line">        config.setAllowCredentials(<span class="literal">true</span>);          <span class="comment">// 允许携带 cookie</span></span><br><span class="line">        config.addAllowedHeader(<span class="string">&quot;*&quot;</span>);              <span class="comment">// 允许所有请求头</span></span><br><span class="line">        config.addAllowedMethod(<span class="string">&quot;*&quot;</span>);              <span class="comment">// 允许所有请求方法</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 将配置关联到对应的 URL 模式</span></span><br><span class="line">        <span class="type">UrlBasedCorsConfigurationSource</span> <span class="variable">source</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UrlBasedCorsConfigurationSource</span>();</span><br><span class="line">        source.registerCorsConfiguration(<span class="string">&quot;/**&quot;</span>, config); <span class="comment">// &quot;/**&quot; 表示对所有的路径起效</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 返回一个 CorsFilter 对象</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">CorsFilter</span>(source);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E8%B7%A8%E5%9F%9F%E9%97%AE%E9%A2%98/" data-id="cuidkL3vg4V2FxxRYsIDrOGno" data-title="跨域问题" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1649,185 +1911,7 @@ export default router
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" data-id="cuidkLy1XgqAfcxhZeLUb2z7X" data-title="数据库学习笔记" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-后端/跨域问题" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E8%B7%A8%E5%9F%9F%E9%97%AE%E9%A2%98/" class="article-date">
-  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E8%B7%A8%E5%9F%9F%E9%97%AE%E9%A2%98/">跨域问题</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <p>﻿# 跨域问题</p>
-<p>浏览器的<strong>同源策略</strong>会阻止网页向不同源（协议、域名、端口任一不同）的服务器发起请求。CORS 是一种机制，允许服务器通过添加特定的响应头来声明哪些跨域请求是被允许的。如果服务端没有正确配置 CORS，跨域请求（例如前端域名 <code>http://localhost:3000</code> 调用后端 <code>http://localhost:8080</code> 的 API）会被浏览器拦截。</p>
-<p>所以我们需要手动设置<strong>跨域访问</strong></p>
-<p>示例：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">SecurityConfig</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// CORS 配置</span></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="keyword">public</span> CorsFilter <span class="title function_">corsFilter</span><span class="params">()</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 创建 CORS 配置对象</span></span><br><span class="line">        <span class="type">CorsConfiguration</span> <span class="variable">config</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">CorsConfiguration</span>();</span><br><span class="line"></span><br><span class="line">        config.addAllowedOriginPattern(<span class="string">&quot;*&quot;</span>);       <span class="comment">// 允许所有域名</span></span><br><span class="line">        config.setAllowCredentials(<span class="literal">true</span>);          <span class="comment">// 允许携带 cookie</span></span><br><span class="line">        config.addAllowedHeader(<span class="string">&quot;*&quot;</span>);              <span class="comment">// 允许所有请求头</span></span><br><span class="line">        config.addAllowedMethod(<span class="string">&quot;*&quot;</span>);              <span class="comment">// 允许所有请求方法</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 将配置关联到对应的 URL 模式</span></span><br><span class="line">        <span class="type">UrlBasedCorsConfigurationSource</span> <span class="variable">source</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">UrlBasedCorsConfigurationSource</span>();</span><br><span class="line">        source.registerCorsConfiguration(<span class="string">&quot;/**&quot;</span>, config); <span class="comment">// &quot;/**&quot; 表示对所有的路径起效</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 返回一个 CorsFilter 对象</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">CorsFilter</span>(source);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E8%B7%A8%E5%9F%9F%E9%97%AE%E9%A2%98/" data-id="cuid-QAmAeNnVC9gIp_mAjp9e" data-title="跨域问题" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-后端/密码加密" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%AF%86%E7%A0%81%E5%8A%A0%E5%AF%86/" class="article-date">
-  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%AF%86%E7%A0%81%E5%8A%A0%E5%AF%86/">密码加密</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <p>﻿# 密码加密</p>
-<p>后端存储和使用密码时需要注意安全性问题</p>
-<h3 id="1-密码加密"><a href="#1-密码加密" class="headerlink" title="1. 密码加密"></a>1. 密码加密</h3><p>可以使用 <strong>BCrypt 密码加密</strong>对密码进行加密处理</p>
-<p>导入依赖：</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-security<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span>  </span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
-
-<p>创建自定义类</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">PasswordUtil</span>  </span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 注册静态对象  </span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">BCryptPasswordEncoder</span> <span class="variable">encoder</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">BCryptPasswordEncoder</span>();  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 加密  </span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> String <span class="title function_">encode</span><span class="params">(String rawPassword)</span>  </span><br><span class="line">    &#123;  </span><br><span class="line">        <span class="keyword">return</span> encoder.encode(rawPassword);  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 校验  </span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="type">boolean</span> <span class="title function_">matches</span><span class="params">(String rawPassword, String encodedPassword)</span>  </span><br><span class="line">    &#123;  </span><br><span class="line">        <span class="keyword">return</span> encoder.matches(rawPassword, encodedPassword);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><strong>原理：存储的时候使用加密存入加密后字符串，需要校验的时候，算法提取出盐值并对输入的密码进行加密，和加密好的进行对比即可</strong></p>
-<p><strong>由于该算法无法解密，拥有很高的安全性</strong></p>
-<h3 id="2-返回给前端时排除密码"><a href="#2-返回给前端时排除密码" class="headerlink" title="2. 返回给前端时排除密码"></a>2. 返回给前端时排除密码</h3><p>如果在后端是直接返回 User 对象，需要在 password 字段前面加上注解</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 密码（加密后）  </span></span><br><span class="line"><span class="meta">@JsonIgnore</span></span><br><span class="line"><span class="keyword">private</span> String password;</span><br></pre></td></tr></table></figure>
-
-<p>防止被序列化，这样返回给前端的数据就不带有密码了</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%AF%86%E7%A0%81%E5%8A%A0%E5%AF%86/" data-id="cuidWFpfou_y-Xjf86kCmQW-2" data-title="密码加密" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-后端/注解的使用" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%B3%A8%E8%A7%A3%E7%9A%84%E4%BD%BF%E7%94%A8/" class="article-date">
-  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%B3%A8%E8%A7%A3%E7%9A%84%E4%BD%BF%E7%94%A8/">注解的使用</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <p>﻿# 注解的使用</p>
-<p>在实际编写中，我们可能需要给某一个类、方法、成员函数上面加上注解</p>
-<p>比如用于标识&#x3D;&#x3D;方法重写&#x3D;&#x3D;的<code>@override</code>等等</p>
-<p>这里主要记录<strong>如何自定义注解</strong>以及<strong>如何使用</strong></p>
-<h2 id="1-注解的创建"><a href="#1-注解的创建" class="headerlink" title="1. 注解的创建"></a>1. 注解的创建</h2><p>在 idea 里面，可以直接选择创建一个注解</p>
-<p>这里给出一个简单的注解示例代码：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span>  </span><br><span class="line"><span class="meta">@Target(ElementType.PARAMETER)</span>  </span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> Param  </span><br><span class="line">&#123;  </span><br><span class="line">    String <span class="title function_">value</span><span class="params">()</span>;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="2-注解的属性"><a href="#2-注解的属性" class="headerlink" title="2. 注解的属性"></a>2. 注解的属性</h2><p>注解其实就类似于一个说明书，我们可以在类、方法、成员函数上面加上注解，然后来获取相关注解的信息</p>
-<p>其中注解有两个属性</p>
-<ul>
-<li>可以加在哪？（Target）</li>
-<li>存在多久？（Retention）</li>
-</ul>
-<p>以及一个用于读取注解的方法：Reflection（反射）</p>
-<h3 id="2-1-Target"><a href="#2-1-Target" class="headerlink" title="2.1 Target"></a>2.1 Target</h3><p>Target 属性是用于指定这个注解可以贴在哪里的，如果不指定，默认可以贴在任何地方</p>
-<p>Target 的设置示例代码如下：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target(&#123;ElementType.METHOD, ElementType.FIELD&#125;)</span></span><br></pre></td></tr></table></figure>
-
-<p>其中有几个<strong>常用值</strong>：</p>
-<ul>
-<li><code>ElementType.TYPE</code>：类、接口、注解、枚举</li>
-<li><code>ElementType.METHOD</code>：方法</li>
-<li><code>ElementType.FIELD</code>：成员变量（属性）</li>
-<li><code>ElementType.PARAMETER</code>：方法的参数</li>
-</ul>
-<p>通过设定以上几个值，就可以指定这个注解可以贴的位置</p>
-<h3 id="2-2-Retention"><a href="#2-2-Retention" class="headerlink" title="2.2 Retention"></a>2.2 Retention</h3><p>Retention 这个属性决定了这个注解的存活周期</p>
-<p>写法：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span></span><br></pre></td></tr></table></figure>
-
-<p>Retention 有三种级别：</p>
-<ol>
-<li><code>RetentionPolicy.SOURCE</code>：<strong>编译期丢弃</strong>，只用于给编译期看（比如<code>@Override</code>）</li>
-<li><code>RetentionPolicy.CLASS</code>：<strong>类加载时丢弃</strong>，可以存在于 <code>.class</code> 文件中，但是不会被加载到内存</li>
-<li><code>RetentionPolicy.RUNTIME</code>：<strong>运行期保留</strong>，这是<strong>框架</strong>唯一能读取到的级别，如果想通过反射读取，必须选这个</li>
-</ol>
-<h3 id="2-3-存放与获取"><a href="#2-3-存放与获取" class="headerlink" title="2.3 存放与获取"></a>2.3 存放与获取</h3><p>注解不仅仅是给类、方法、成员函数带上一个标签，更重要的是，注解可以存放一些成员变量，可以让调用者获取</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Table(name = &quot;user_table&quot;)</span> <span class="comment">// 自定义注解 public class User</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">private</span> String name;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>像这样，在注解定义的时候如果有<strong>成员变量</strong>，就可以在注解后的括号内<strong>赋值</strong></p>
-<p>我们可以使用<strong>反射</strong>（Reflection）来获取</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ReflectionDemo</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 1. 获取 Class 对象</span></span><br><span class="line">        Class&lt;User&gt; clazz = User.class;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 2. 检查类上有没有 @Table 注解</span></span><br><span class="line">        <span class="keyword">if</span> (clazz.isAnnotationPresent(Table.class))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 3. 获取该注解对象</span></span><br><span class="line">            <span class="type">Table</span> <span class="variable">table</span> <span class="operator">=</span> clazz.getAnnotation(Table.class);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 4. 读取注解里的属性值（这就是反射的魔力）</span></span><br><span class="line">            <span class="type">String</span> <span class="variable">tableName</span> <span class="operator">=</span> table.name();</span><br><span class="line">            System.out.println(<span class="string">&quot;成功读到数据库表名: &quot;</span> + tableName);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>通过这样，我们就获取了一个注解中包含的东西</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%B3%A8%E8%A7%A3%E7%9A%84%E4%BD%BF%E7%94%A8/" data-id="cuidvQSAxyw9yYewjqYBDQmxa" data-title="注解的使用" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" data-id="cuidrNydsAntD0B2GlPgGSAZx" data-title="数据库学习笔记" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1963,7 +2047,7 @@ export default router
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E9%89%B4%E6%9D%83%E6%9C%BA%E5%88%B6/" data-id="cuid48tZJ4QUak9ftHYnAplOo" data-title="鉴权机制" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E9%89%B4%E6%9D%83%E6%9C%BA%E5%88%B6/" data-id="cuidxumJ8SUavqcC_CCvpPFdo" data-title="鉴权机制" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -2015,10 +2099,6 @@ export default router
           </li>
         
           <li>
-            <a href="/2026/05/04/java/Java%E5%AD%A6%E4%B9%A0%EF%BC%9A%E7%BF%81%E5%87%AF%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0(%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95)/">Java的基本输入与输出：</a>
-          </li>
-        
-          <li>
             <a href="/2026/05/04/go/Go%E5%9F%BA%E7%A1%80/">GO基础</a>
           </li>
         
@@ -2027,7 +2107,11 @@ export default router
           </li>
         
           <li>
-            <a href="/2026/05/04/go/Go%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/">Go文件操作</a>
+            <a href="/2026/05/04/go/Go%E8%BF%9B%E9%98%B6/">GO进阶</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/java/Java%E5%AD%A6%E4%B9%A0%EF%BC%9A%E7%BF%81%E5%87%AF%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0(%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1)/">如何创建对象？</a>
           </li>
         
       </ul>
