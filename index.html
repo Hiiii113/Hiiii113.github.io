@@ -77,120 +77,6 @@
       <div class="outer">
         <section id="main">
   
-    <article id="post-add-frontmatter" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2026/05/04/add-frontmatter/" class="article-date">
-  <time class="dt-published" datetime="2026-05-04T10:10:56.863Z" itemprop="datePublished">2026-05-04</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        const fs = require("fs");
-const path = require("path");
-
-const dir = process.cwd();
-
-// 备份目录
-const backupDir = path.join(
-  path.dirname(dir),
-  "_posts_backup_" +
-    new Date().toISOString().replace(/[-:T]/g, "").slice(0, 14)
-);
-
-fs.cpSync(dir, backupDir, { recursive: true });
-
-function walk(folder) {
-  const files = fs.readdirSync(folder);
-
-  for (const file of files) {
-    const fullPath = path.join(folder, file);
-    const stat = fs.statSync(fullPath);
-
-    if (stat.isDirectory()) {
-      walk(fullPath);
-      continue;
-    }
-
-    if (!file.endsWith(".md")) {
-      continue;
-    }
-
-    let content = fs.readFileSync(fullPath, "utf8");
-
-    // 已经有 front-matter 的跳过
-    if (/^\s*---\s*\r?\n/.test(content)) {
-      console.log("跳过：" + file);
-      continue;
-    }
-
-    let title = path.basename(file, ".md");
-
-    const match = content.match(/^#\s+(.+)$/m);
-    if (match) {
-      title = match[1].trim();
-    }
-
-    // 处理 YAML 单引号
-    title = title.replace(/'/g, "''");
-
-    const created = stat.birthtime;
-    const updated = stat.mtime;
-
-    function formatDate(date) {
-      const pad = (n) => String(n).padStart(2, "0");
-      return (
-        date.getFullYear() +
-        "-" +
-        pad(date.getMonth() + 1) +
-        "-" +
-        pad(date.getDate()) +
-        " " +
-        pad(date.getHours()) +
-        ":" +
-        pad(date.getMinutes()) +
-        ":" +
-        pad(date.getSeconds())
-      );
-    }
-
-    const frontmatter =
-      "---\n" +
-      "title: '" + title + "'\n" +
-      "date: " + formatDate(created) + "\n" +
-      "updated: " + formatDate(updated) + "\n" +
-      "tags:\n" +
-      "categories:\n" +
-      "---\n\n";
-
-    fs.writeFileSync(fullPath, frontmatter + content, "utf8");
-
-    console.log("已添加：" + file);
-  }
-}
-
-walk(dir);
-
-console.log("处理完成");
-console.log("备份目录：" + backupDir);
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/add-frontmatter/" data-id="cuidsKKUc1R9wXEamBPuPA5q8" data-title="" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
     <article id="post-go/Go基础" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2026/05/04/go/Go%E5%9F%BA%E7%A1%80/" class="article-date">
@@ -2377,6 +2263,64 @@ import {RouterView} from &#39;vue-router&#39;
 
 
   
+    <article id="post-后端/LocalDatetime" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/LocalDatetime/" class="article-date">
+  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/LocalDatetime/">LocalDatetime</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>﻿# LocalDateTime</p>
+<h2 id="一、LocalDateTime-和-datetime"><a href="#一、LocalDateTime-和-datetime" class="headerlink" title="一、LocalDateTime 和 datetime"></a>一、LocalDateTime 和 datetime</h2><p>在数据库中存储时间我们一般使用的是<code>datetime</code>这个类型，而在实体类中我们通常使用<code>LocalDateTime</code>与之对应，这就会产生问题：</p>
+<p><strong>如何转化？</strong></p>
+<blockquote>
+<p>这种功能其实在 JDBC 底层就已经实现，只需要使用<code>getObject()</code>方法即可：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ResultSet rs = statement.executeQuery(&quot;SELECT create_time FROM log&quot;);</span><br><span class="line">LocalDateTime time = rs.getObject(&quot;create_time&quot;, LocalDateTime.class); // 通过反射转化</span><br></pre></td></tr></table></figure>
+
+<p>而在 Mybatis Plus 中，由于我们不需要手动获取结果，所以是 Mybatis Plus 自动转化的</p>
+</blockquote>
+<p>然而，当我们想要以字符串形式输出时，就会带来问题：<strong>如何输出？</strong></p>
+<ol>
+<li><p>使用 <code>toString()</code>方法</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">String</span> <span class="variable">str2</span> <span class="operator">=</span> now.toString(); <span class="comment">// 输出：2026-03-29T14:30:00，带了一个 T 不好看</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用<code>DateTimeFormatter</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">DateTimeFormatter</span> <span class="variable">formatter</span> <span class="operator">=</span> DateTimeFormatter.ofPattern(<span class="string">&quot;yyyy-MM-dd HH:mm:ss&quot;</span>);</span><br><span class="line"><span class="type">String</span> <span class="variable">str</span> <span class="operator">=</span> now.format(formatter);</span><br><span class="line"><span class="comment">// 输出：2026-03-29 14:30:00，自定义格式</span></span><br></pre></td></tr></table></figure></li>
+</ol>
+<p><strong>而在后端返回前端的过程中，我们需要将<code>LocalDateTime</code>转化成 JSON 格式返回，这个时候就需要用 Jackson 了</strong></p>
+<p>Jackson 是 SpringBoot 自带的转化器，但是默认会将<code>LocalDateTime</code>转化成<code>yyyy-MM-ddTHH:mm:ss</code>的格式，中间有个 T，不好看</p>
+<p>我们只需要在实体类的<code>LocalDateTime</code>数据上加上<code>@JsonFormat(pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;)</code>注解即可让 Jackson 以指定方式转化</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/LocalDatetime/" data-id="cuiddV4aTb1BMW86iAeM-P7hn" data-title="LocalDatetime" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
 
 
   <nav id="page-nav">
@@ -2413,10 +2357,6 @@ import {RouterView} from &#39;vue-router&#39;
       <ul>
         
           <li>
-            <a href="/2026/05/04/add-frontmatter/">(no title)</a>
-          </li>
-        
-          <li>
             <a href="/2026/05/04/go/Go%E5%9F%BA%E7%A1%80/">GO基础</a>
           </li>
         
@@ -2430,6 +2370,10 @@ import {RouterView} from &#39;vue-router&#39;
         
           <li>
             <a href="/2026/05/04/java/Java%E5%AD%A6%E4%B9%A0%EF%BC%9A%E7%BF%81%E5%87%AF%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0(%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1)/">如何创建对象？</a>
+          </li>
+        
+          <li>
+            <a href="/2026/05/04/%E5%89%8D%E7%AB%AF/App.vue%20%E5%92%8C%20main.js/">App.vue 和 main.js</a>
           </li>
         
       </ul>
