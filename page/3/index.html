@@ -77,6 +77,260 @@
       <div class="outer">
         <section id="main">
   
+    <article id="post-后端/使用AOP实现日志记录" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E4%BD%BF%E7%94%A8AOP%E5%AE%9E%E7%8E%B0%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/" class="article-date">
+  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E4%BD%BF%E7%94%A8AOP%E5%AE%9E%E7%8E%B0%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/">使用AOP实现日志记录</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>﻿# 使用AOP实现日志记录</p>
+<p>Spring 的核心思想之一 AOP （面向切面编程）的一个典型应用就是实现日志记录</p>
+<p>拥有了 AOP 后，无需在每个方法上添加输出日志的代码，即可实现日志记录，大大节省重复代码量</p>
+<blockquote>
+<p>这里使用的是 MYSQL 数据库保存日志实体，并借此实现查询日志的接口</p>
+</blockquote>
+<h2 id="一、安装依赖"><a href="#一、安装依赖" class="headerlink" title="一、安装依赖"></a>一、安装依赖</h2><p>本笔记使用的是 SpringBoot 实现，需要检查 <code>pom.xml</code> 中是否含有以下三项依赖：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- Spring Boot Starter Web（包含 AOP） --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-web<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- AOP --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-aop<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">&lt;!-- Lombok（省略 getter/setter 和日志声明） --&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.projectlombok<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>lombok<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="二、编写注解"><a href="#二、编写注解" class="headerlink" title="二、编写注解"></a>二、编写注解</h2><p>我们需要编写自定义注解类，用于标识哪一个方法、类需要记录日志</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target(&#123;ElementType.METHOD&#125;)</span> <span class="comment">// 只作用于方法</span></span><br><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span> <span class="comment">// 运行时生效</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> LogAnnotation</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 模块名</span></span><br><span class="line">    String <span class="title function_">module</span><span class="params">()</span> <span class="keyword">default</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作名</span></span><br><span class="line">    String <span class="title function_">operator</span><span class="params">()</span> <span class="keyword">default</span> <span class="string">&quot;&quot;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>可以自行更改注解名和内含的信息，这里以<strong>模块–操作方法</strong>为例</p>
+</blockquote>
+<h2 id="三、编写日志表和对应实体"><a href="#三、编写日志表和对应实体" class="headerlink" title="三、编写日志表和对应实体"></a>三、编写日志表和对应实体</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 日志表</span></span><br><span class="line"><span class="keyword">CREATE TABLE</span> `sys_operation_log`</span><br><span class="line">(</span><br><span class="line">    id             <span class="type">int</span>          <span class="keyword">NOT NULL</span> AUTO_INCREMENT COMMENT <span class="string">&#x27;日志ID（自增主键）&#x27;</span>,</span><br><span class="line">    user_number    <span class="type">varchar</span>(<span class="number">50</span>)  <span class="keyword">NOT NULL</span> COMMENT <span class="string">&#x27;操作用户&#x27;</span>,</span><br><span class="line">    operation_time datetime     <span class="keyword">NOT NULL</span> COMMENT <span class="string">&#x27;操作时间&#x27;</span>,</span><br><span class="line">    <span class="keyword">module</span>         <span class="type">varchar</span>(<span class="number">100</span>) <span class="keyword">NOT NULL</span> COMMENT <span class="string">&#x27;操作模块（如：用户管理）&#x27;</span>,</span><br><span class="line">    operator       <span class="type">varchar</span>(<span class="number">255</span>)          <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span> COMMENT <span class="string">&#x27;操作描述（如：新增用户）&#x27;</span>,</span><br><span class="line">    <span class="keyword">method</span>         <span class="type">varchar</span>(<span class="number">255</span>) <span class="keyword">NOT NULL</span> COMMENT <span class="string">&#x27;操作方法全路径&#x27;</span>,</span><br><span class="line">    params         text COMMENT <span class="string">&#x27;方法参数（JSON格式）&#x27;</span>,</span><br><span class="line">    <span class="keyword">result</span>         text COMMENT <span class="string">&#x27;操作结果（成功/失败，JSON格式）&#x27;</span>,</span><br><span class="line">    exception      text COMMENT <span class="string">&#x27;异常信息（失败时记录）&#x27;</span>,</span><br><span class="line">    cost_time      <span class="type">bigint</span>                <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span> COMMENT <span class="string">&#x27;操作耗时（毫秒）&#x27;</span>,</span><br><span class="line">    client_ip      <span class="type">varchar</span>(<span class="number">50</span>)           <span class="keyword">DEFAULT</span> <span class="keyword">NULL</span> COMMENT <span class="string">&#x27;客户端IP&#x27;</span>,</span><br><span class="line">    create_time    datetime     <span class="keyword">not null</span> <span class="keyword">default</span> <span class="built_in">current_timestamp</span> comment <span class="string">&#x27;创建时间&#x27;</span>,</span><br><span class="line">    <span class="keyword">PRIMARY KEY</span> (id),</span><br><span class="line">    KEY idx_operation_time (operation_time) COMMENT <span class="string">&#x27;按操作时间查询索引&#x27;</span>,</span><br><span class="line">    KEY idx_username (user_number) COMMENT <span class="string">&#x27;按用户查询索引&#x27;</span></span><br><span class="line">) COMMENT <span class="operator">=</span><span class="string">&#x27;系统操作日志表&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Data</span></span><br><span class="line"><span class="meta">@TableName(&quot;sys_operation_log&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Log</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 日志 id</span></span><br><span class="line">    <span class="meta">@TableId(type = IdType.AUTO)</span></span><br><span class="line">    <span class="keyword">private</span> <span class="type">int</span> id;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作用户</span></span><br><span class="line">    <span class="keyword">private</span> String userNumber;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作时间</span></span><br><span class="line">    <span class="meta">@JsonFormat(pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> LocalDateTime operationTime;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作模块</span></span><br><span class="line">    <span class="keyword">private</span> String <span class="keyword">module</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作名</span></span><br><span class="line">    <span class="keyword">private</span> String operator;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作方法全路径</span></span><br><span class="line">    <span class="keyword">private</span> String method;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 方法参数(JSON格式)</span></span><br><span class="line">    <span class="keyword">private</span> Object params;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作结果</span></span><br><span class="line">    <span class="keyword">private</span> Object result;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 异常信息(失败时记录)</span></span><br><span class="line">    <span class="keyword">private</span> String exception;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 操作耗时</span></span><br><span class="line">    <span class="keyword">private</span> Long costTime;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 客户端IP</span></span><br><span class="line">    <span class="keyword">private</span> String clientIp;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建时间</span></span><br><span class="line">    <span class="meta">@JsonFormat(pattern = &quot;yyyy-MM-dd HH:mm:ss&quot;)</span></span><br><span class="line">    <span class="keyword">private</span> LocalDateTime createTime;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="四、编写切面类（核心）"><a href="#四、编写切面类（核心）" class="headerlink" title="四、编写切面类（核心）"></a>四、编写切面类（核心）</h2><p>为了让日志的保存和日志的提取分开来，先新建一个<code>LogHandler</code>接口</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">LogHandler</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 保存log实体</span></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">saveOperationLog</span><span class="params">(Log log)</span> <span class="keyword">throws</span> JsonProcessingException;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>再写<code>LogAspect</code>用于实现 AOP 提取日志</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@Aspect</span></span><br><span class="line"><span class="meta">@Slf4j</span></span><br><span class="line"><span class="meta">@RequiredArgsConstructor</span> <span class="comment">// 使用lombok自动注入所需的</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">LogAspect</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// Jackson</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> ObjectMapper objectMapper;</span><br><span class="line">    <span class="comment">// LogHandler</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> LogHandler logHandler;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 遇到 @LogAnnotation 的时候进行切入</span></span><br><span class="line">    <span class="meta">@Pointcut(&quot;@annotation(hiiii113.log.LogAnnotation)&quot;)</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">pointcut</span><span class="params">()</span></span><br><span class="line">    &#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 环绕通知</span></span><br><span class="line">    <span class="meta">@Around(&quot;pointcut()&quot;)</span> <span class="comment">// 遇到pointcut()这个函数对应的注解的时候切入</span></span><br><span class="line">    <span class="keyword">public</span> Object <span class="title function_">around</span><span class="params">(ProceedingJoinPoint joinPoint)</span> <span class="keyword">throws</span> Throwable</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 记录方法开始时间</span></span><br><span class="line">        <span class="type">long</span> <span class="variable">startTime</span> <span class="operator">=</span> System.currentTimeMillis();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 初始化日志实体</span></span><br><span class="line">        <span class="type">Log</span> <span class="variable">logEntity</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Log</span>();</span><br><span class="line">        logEntity.setOperationTime(LocalDateTime.now()); <span class="comment">// 操作时间(当前时间)</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取客户端IP（从请求上下文获取）</span></span><br><span class="line">        <span class="type">ServletRequestAttributes</span> <span class="variable">requestAttributes</span> <span class="operator">=</span> (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();</span><br><span class="line">        <span class="keyword">if</span> (requestAttributes != <span class="literal">null</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="type">HttpServletRequest</span> <span class="variable">request</span> <span class="operator">=</span> requestAttributes.getRequest();</span><br><span class="line">            logEntity.setClientIp(request.getRemoteAddr()); <span class="comment">// 客户端IP</span></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取方法信息（全路径、参数）</span></span><br><span class="line">        <span class="type">MethodSignature</span> <span class="variable">signature</span> <span class="operator">=</span> (MethodSignature) joinPoint.getSignature();</span><br><span class="line">        <span class="type">Method</span> <span class="variable">method</span> <span class="operator">=</span> signature.getMethod();</span><br><span class="line">        <span class="comment">// 方法全路径：包名 + 类名 + 方法名</span></span><br><span class="line">        logEntity.setMethod(method.getDeclaringClass().getName() + <span class="string">&quot;.&quot;</span> + method.getName());</span><br><span class="line">        <span class="comment">// 方法参数：数组转字符串</span></span><br><span class="line">        logEntity.setParams(Arrays.toString(joinPoint.getArgs()));</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取@OperationLog注解信息</span></span><br><span class="line">        <span class="type">LogAnnotation</span> <span class="variable">logAnnotation</span> <span class="operator">=</span> method.getAnnotation(LogAnnotation.class);</span><br><span class="line">        logEntity.setModule(logAnnotation.<span class="keyword">module</span>());</span><br><span class="line">        logEntity.setOperator(logAnnotation.operator());</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取操作用户(使用 Sa-Token 的方法)</span></span><br><span class="line">        <span class="type">Object</span> <span class="variable">loginId</span> <span class="operator">=</span> StpUtil.getLoginIdDefaultNull();</span><br><span class="line">        logEntity.setUserNumber(loginId != <span class="literal">null</span> ? loginId.toString() : <span class="string">&quot;anonymous&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="type">Object</span> <span class="variable">businessResult</span> <span class="operator">=</span> <span class="literal">null</span>; <span class="comment">// 业务方法返回结果</span></span><br><span class="line">        <span class="keyword">try</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 执行目标业务方法（核心业务逻辑）</span></span><br><span class="line">            businessResult = joinPoint.proceed();</span><br><span class="line">            <span class="comment">// 方法执行成功：标记结果</span></span><br><span class="line">            logEntity.setResult(objectMapper.writeValueAsString(businessResult));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">catch</span> (Exception e)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 方法执行失败：记录异常信息</span></span><br><span class="line">            logEntity.setResult(<span class="string">&quot;失败&quot;</span>);</span><br><span class="line">            logEntity.setException(e.getMessage()); <span class="comment">// 异常信息（简化，可记录堆栈）</span></span><br><span class="line">            <span class="keyword">throw</span> e; <span class="comment">// 重新抛出异常，不影响原有业务异常处理逻辑</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">finally</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 计算操作耗时（结束时间-开始时间）</span></span><br><span class="line">            logEntity.setCostTime(System.currentTimeMillis() - startTime);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 8. 保存日志（调用业务模块实现的LogHandler）</span></span><br><span class="line">            saveOperationLog(logEntity);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 返回业务方法结果，不影响业务流程</span></span><br><span class="line">        <span class="keyword">return</span> businessResult;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">saveOperationLog</span><span class="params">(Log logEntity)</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">try</span></span><br><span class="line">        &#123;</span><br><span class="line">            logHandler.saveOperationLog(logEntity);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">catch</span> (Exception e)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 日志保存失败不影响主业务，仅记录日志告警</span></span><br><span class="line">            log.error(<span class="string">&quot;记录系统操作日志失败，日志信息：&#123;&#125;&quot;</span>, logEntity, e);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>再写好保存 Log 实体到数据库的<code>LogHandlerImpl</code>实现类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="meta">@RequiredArgsConstructor</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">LogHandlerImpl</span> <span class="keyword">implements</span> <span class="title class_">LogHandler</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 注入</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> LogMapper logMapper;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> ObjectMapper objectMapper;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">saveOperationLog</span><span class="params">(Log log)</span> <span class="keyword">throws</span> JsonProcessingException</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 将Object类型的params/result序列化为JSON字符串</span></span><br><span class="line">        <span class="keyword">if</span> (log.getParams() != <span class="literal">null</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            log.setParams(objectMapper.writeValueAsString(log.getParams()));</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (log.getResult() != <span class="literal">null</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            log.setResult(objectMapper.writeValueAsString(log.getResult()));</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 调用MyBatis Mapper插入数据库</span></span><br><span class="line">        logMapper.insert(log);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="五、使用"><a href="#五、使用" class="headerlink" title="五、使用"></a>五、使用</h2><p>只需要在需要记录日志的类、方法上面加上<code>@LogAnnotation</code>注解，即可生成日志</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 获取用户信息</span></span><br><span class="line"><span class="meta">@LogAnnotation(module = &quot;users&quot;, operator = &quot;获取用户信息&quot;)</span></span><br><span class="line"><span class="meta">@GetMapping(&quot;/info&quot;)</span></span><br><span class="line"><span class="meta">@SaCheckLogin</span></span><br><span class="line"><span class="keyword">public</span> Result&lt;User&gt; <span class="title function_">getUserInfo</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">String</span> <span class="variable">userNumber</span> <span class="operator">=</span> StpUtil.getLoginIdAsString();</span><br><span class="line">    <span class="type">User</span> <span class="variable">user</span> <span class="operator">=</span> userService.getOne(<span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;().eq(User::getUserNumber, userNumber));</span><br><span class="line">    <span class="keyword">return</span> Result.success(<span class="string">&quot;查询成功！&quot;</span>, user, <span class="number">200</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E4%BD%BF%E7%94%A8AOP%E5%AE%9E%E7%8E%B0%E6%97%A5%E5%BF%97%E8%AE%B0%E5%BD%95/" data-id="cuidRDuoe9lcvlpmWZa497KMK" data-title="使用AOP实现日志记录" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-后端/Vue路由设置" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/Vue%E8%B7%AF%E7%94%B1%E8%AE%BE%E7%BD%AE/" class="article-date">
+  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/Vue%E8%B7%AF%E7%94%B1%E8%AE%BE%E7%BD%AE/">Vue路由设置</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>﻿# Vue路由设置</p>
+<p>在前端写好了几个 Vue 组件并需要相互跳转时，需要手动设置路由</p>
+<p>示例：</p>
+<pre><code class="language-javascript">import {createRouter, createWebHistory} from &#39;vue-router&#39;  
+  
+const router = createRouter({  
+    history: createWebHistory(import.meta.env.BASE_URL),  
+    routes: [  
+        {   path: &#39;/&#39;,  		// 地址
+            alias: &#39;/login&#39;,  	// 别名，和地址的作用一样
+            name: &#39;login&#39;,  	// 名字
+            component: () =&gt; import(&#39;../views/Login.vue&#39;) // 懒加载
+        },  
+        {  
+            path: &#39;/register&#39;,  
+            name: &#39;register&#39;,  
+            component: () =&gt; import(&#39;../views/Register.vue&#39;)  
+        },
+        {  
+            path: &#39;/student&#39;,  
+            name: &#39;student&#39;,  
+            component: () =&gt; import(&#39;../views/StudentMenu.vue&#39;)  
+        },  
+        {  
+            path: &#39;/admin&#39;,  
+            name: &#39;admin&#39;,  
+            component: () =&gt; import(&#39;../views/AdminMenu.vue&#39;)  
+        },  
+    ],  
+})  
+
+// 导出
+export default router
+</code></pre>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/Vue%E8%B7%AF%E7%94%B1%E8%AE%BE%E7%BD%AE/" data-id="cuid99erS-28ihHm44SX7aP0X" data-title="Vue路由设置" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-后端/lambda语句使用" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/lambda%E8%AF%AD%E5%8F%A5%E4%BD%BF%E7%94%A8/" class="article-date">
+  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/lambda%E8%AF%AD%E5%8F%A5%E4%BD%BF%E7%94%A8/">lambda语句使用</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>﻿# MyBatis-Plus Lambda 详细用法指南</p>
+<h2 id="一、基础准备"><a href="#一、基础准备" class="headerlink" title="一、基础准备"></a>一、基础准备</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Data</span></span><br><span class="line"><span class="meta">@TableName(&quot;sys_user&quot;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">User</span> &#123;</span><br><span class="line">    <span class="meta">@TableId(type = IdType.AUTO)</span></span><br><span class="line">    <span class="keyword">private</span> Long id;</span><br><span class="line">    <span class="keyword">private</span> String username;</span><br><span class="line">    <span class="keyword">private</span> String password;</span><br><span class="line">    <span class="keyword">private</span> String phone;</span><br><span class="line">    <span class="keyword">private</span> String email;</span><br><span class="line">    <span class="keyword">private</span> Integer status;       <span class="comment">// 0-禁用 1-启用</span></span><br><span class="line">    <span class="keyword">private</span> Integer age;</span><br><span class="line">    <span class="keyword">private</span> LocalDateTime createTime;</span><br><span class="line">    <span class="keyword">private</span> LocalDateTime updateTime;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="二、查询（Query）——-Lambda-的主战场"><a href="#二、查询（Query）——-Lambda-的主战场" class="headerlink" title="二、查询（Query）—— Lambda 的主战场"></a>二、查询（Query）—— Lambda 的主战场</h2><h3 id="1-基础条件查询"><a href="#1-基础条件查询" class="headerlink" title="1. 基础条件查询"></a>1. 基础条件查询</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ========== 等值查询 ==========</span></span><br><span class="line"><span class="comment">// SELECT * FROM sys_user WHERE username = &#x27;张三&#x27;</span></span><br><span class="line">List&lt;User&gt; list = <span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .eq(User::getUsername, <span class="string">&quot;张三&quot;</span>)</span><br><span class="line">    .list();</span><br><span class="line"></span><br><span class="line"><span class="comment">// ========== 不等值查询 ==========</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .ne(User::getStatus, <span class="number">0</span>)            <span class="comment">// status != 0</span></span><br><span class="line">    .gt(User::getAge, <span class="number">18</span>)              <span class="comment">// age &gt; 18</span></span><br><span class="line">    .ge(User::getAge, <span class="number">18</span>)              <span class="comment">// age &gt;= 18</span></span><br><span class="line">    .lt(User::getAge, <span class="number">60</span>)              <span class="comment">// age &lt; 60</span></span><br><span class="line">    .le(User::getAge, <span class="number">60</span>);             <span class="comment">// age &lt;= 60</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="2-模糊查询"><a href="#2-模糊查询" class="headerlink" title="2. 模糊查询"></a>2. 模糊查询</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// LIKE &#x27;%张%&#x27;</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .like(User::getUsername, <span class="string">&quot;张&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// LIKE &#x27;张%&#x27;</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .likeRight(User::getUsername, <span class="string">&quot;张&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// LIKE &#x27;%张&#x27;</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .likeLeft(User::getUsername, <span class="string">&quot;张&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-范围查询"><a href="#3-范围查询" class="headerlink" title="3. 范围查询"></a>3. 范围查询</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ========== IN 查询 ==========</span></span><br><span class="line"><span class="comment">// age IN (18, 20, 25)</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .in(User::getAge, <span class="number">18</span>, <span class="number">20</span>, <span class="number">25</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 用集合</span></span><br><span class="line">List&lt;Integer&gt; ages = Arrays.asList(<span class="number">18</span>, <span class="number">20</span>, <span class="number">25</span>);</span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .in(User::getAge, ages)</span><br><span class="line"></span><br><span class="line"><span class="comment">// ========== NOT IN ==========</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .notIn(User::getAge, <span class="number">18</span>, <span class="number">20</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// ========== BETWEEN ==========</span></span><br><span class="line"><span class="comment">// age BETWEEN 18 AND 30</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .between(User::getAge, <span class="number">18</span>, <span class="number">30</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment">// ========== NOT BETWEEN ==========</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .notBetween(User::getAge, <span class="number">18</span>, <span class="number">30</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-NULL-判断"><a href="#4-NULL-判断" class="headerlink" title="4. NULL 判断"></a>4. NULL 判断</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// email IS NULL</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .isNull(User::getEmail)</span><br><span class="line"></span><br><span class="line"><span class="comment">// email IS NOT NULL</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .isNotNull(User::getEmail)</span><br></pre></td></tr></table></figure>
+
+<h3 id="5-排序"><a href="#5-排序" class="headerlink" title="5. 排序"></a>5. 排序</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ORDER BY age ASC</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .orderByAsc(User::getAge)</span><br><span class="line"></span><br><span class="line"><span class="comment">// ORDER BY create_time DESC</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .orderByDesc(User::getCreateTime)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 多字段排序</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .orderByAsc(User::getStatus)</span><br><span class="line">    .orderByDesc(User::getCreateTime)</span><br></pre></td></tr></table></figure>
+
+<h3 id="6-指定查询字段（SELECT-部分列）"><a href="#6-指定查询字段（SELECT-部分列）" class="headerlink" title="6. 指定查询字段（SELECT 部分列）"></a>6. 指定查询字段（SELECT 部分列）</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// SELECT id, username, age FROM sys_user</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .select(User::getId, User::getUsername, User::getAge)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 排除某些字段（查所有字段，排除 password）</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .select(User.class, info -&gt; </span><br><span class="line">        !info.getColumn().equals(<span class="string">&quot;password&quot;</span>))</span><br></pre></td></tr></table></figure>
+
+<h3 id="7-分页查询"><a href="#7-分页查询" class="headerlink" title="7. 分页查询"></a>7. 分页查询</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 需要配置分页插件</span></span><br><span class="line">Page&lt;User&gt; page = <span class="keyword">new</span> <span class="title class_">Page</span>&lt;&gt;(<span class="number">1</span>, <span class="number">10</span>);  <span class="comment">// 第1页，每页10条</span></span><br><span class="line"></span><br><span class="line">Page&lt;User&gt; result = userService.page(page, </span><br><span class="line">    <span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">        .eq(User::getStatus, <span class="number">1</span>)</span><br><span class="line">        .orderByDesc(User::getCreateTime)</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="comment">// result.getRecords()   → 当前页数据</span></span><br><span class="line"><span class="comment">// result.getTotal()     → 总记录数</span></span><br><span class="line"><span class="comment">// result.getPages()     → 总页数</span></span><br><span class="line"><span class="comment">// result.getCurrent()   → 当前页码</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="8-链式条件（复杂查询）"><a href="#8-链式条件（复杂查询）" class="headerlink" title="8. 链式条件（复杂查询）"></a>8. 链式条件（复杂查询）</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// SELECT * FROM sys_user </span></span><br><span class="line"><span class="comment">// WHERE status = 1 </span></span><br><span class="line"><span class="comment">//   AND age BETWEEN 18 AND 60</span></span><br><span class="line"><span class="comment">//   AND username LIKE &#x27;%张%&#x27;</span></span><br><span class="line"><span class="comment">//   AND email IS NOT NULL</span></span><br><span class="line"><span class="comment">// ORDER BY create_time DESC</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .eq(User::getStatus, <span class="number">1</span>)</span><br><span class="line">    .between(User::getAge, <span class="number">18</span>, <span class="number">60</span>)</span><br><span class="line">    .like(User::getUsername, <span class="string">&quot;张&quot;</span>)</span><br><span class="line">    .isNotNull(User::getEmail)</span><br><span class="line">    .orderByDesc(User::getCreateTime);</span><br></pre></td></tr></table></figure>
+
+<h3 id="9-OR-条件（注意嵌套）"><a href="#9-OR-条件（注意嵌套）" class="headerlink" title="9. OR 条件（注意嵌套）"></a>9. OR 条件（注意嵌套）</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// WHERE status = 1 AND (username = &#x27;张三&#x27; OR phone = &#x27;13800138000&#x27;)</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .eq(User::getStatus, <span class="number">1</span>)</span><br><span class="line">    .and(wrapper -&gt; wrapper</span><br><span class="line">        .eq(User::getUsername, <span class="string">&quot;张三&quot;</span>)</span><br><span class="line">        .or()</span><br><span class="line">        .eq(User::getPhone, <span class="string">&quot;13800138000&quot;</span>)</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line"><span class="comment">// 简单 OR（不需要嵌套）</span></span><br><span class="line"><span class="comment">// WHERE username = &#x27;张三&#x27; OR age = 18</span></span><br><span class="line"><span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .eq(User::getUsername, <span class="string">&quot;张三&quot;</span>)</span><br><span class="line">    .or()</span><br><span class="line">    .eq(User::getAge, <span class="number">18</span>);</span><br></pre></td></tr></table></figure>
+
+<h3 id="10-条件拼接（动态条件，最常用）"><a href="#10-条件拼接（动态条件，最常用）" class="headerlink" title="10. 条件拼接（动态条件，最常用）"></a>10. 条件拼接（动态条件，最常用）</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 查询用户列表，所有参数可选</span></span><br><span class="line"><span class="comment"> * 传了就查，没传就跳过</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> List&lt;User&gt; <span class="title function_">listUsers</span><span class="params">(String username, Integer status, Integer minAge)</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> userService.list(</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">            .like(StringUtils.isNotBlank(username), User::getUsername, username)</span><br><span class="line">            .eq(status != <span class="literal">null</span>, User::getStatus, status)</span><br><span class="line">            .ge(minAge != <span class="literal">null</span>, User::getAge, minAge)</span><br><span class="line">            .orderByDesc(User::getCreateTime)</span><br><span class="line">    );</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 第一个参数为 true 时，条件才生效</span></span><br><span class="line"><span class="comment">// 这是 MP 最强大的特性之一！</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="11-常用查询返回值"><a href="#11-常用查询返回值" class="headerlink" title="11. 常用查询返回值"></a>11. 常用查询返回值</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">LambdaQueryWrapper&lt;User&gt; wrapper = <span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">    .eq(User::getStatus, <span class="number">1</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 返回列表</span></span><br><span class="line">List&lt;User&gt; list = userService.list(wrapper);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 返回单条（期望 0 或 1 条）</span></span><br><span class="line"><span class="type">User</span> <span class="variable">user</span> <span class="operator">=</span> userService.getOne(wrapper);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 返回 Map&lt;id, User&gt;</span></span><br><span class="line">Map&lt;Long, User&gt; map = userService.listMaps(wrapper);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 返回数量</span></span><br><span class="line"><span class="type">int</span> <span class="variable">count</span> <span class="operator">=</span> userService.count(wrapper);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 是否存在</span></span><br><span class="line"><span class="type">boolean</span> <span class="variable">exists</span> <span class="operator">=</span> userService.count(wrapper) &gt; <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 返回指定列的值集合</span></span><br><span class="line">List&lt;String&gt; usernames = userService.listObjs(</span><br><span class="line">    <span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">        .select(User::getUsername)</span><br><span class="line">        .eq(User::getStatus, <span class="number">1</span>),</span><br><span class="line">    Object::toString   <span class="comment">// 转换函数</span></span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="三、更新（Update）——-Lambda-Update-Wrapper"><a href="#三、更新（Update）——-Lambda-Update-Wrapper" class="headerlink" title="三、更新（Update）—— Lambda Update Wrapper"></a>三、更新（Update）—— Lambda Update Wrapper</h2><h3 id="1-基础更新"><a href="#1-基础更新" class="headerlink" title="1. 基础更新"></a>1. 基础更新</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// UPDATE sys_user SET status = 0 WHERE id = 1</span></span><br><span class="line">userService.update(</span><br><span class="line">    <span class="keyword">new</span> <span class="title class_">LambdaUpdateWrapper</span>&lt;User&gt;()</span><br><span class="line">        .eq(User::getId, <span class="number">1</span>)</span><br><span class="line">        .set(User::getStatus, <span class="number">0</span>)</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 多字段更新</span></span><br><span class="line"><span class="comment">// UPDATE sys_user SET status = 0, update_time = now() WHERE id = 1</span></span><br><span class="line">userService.update(</span><br><span class="line">    <span class="keyword">new</span> <span class="title class_">LambdaUpdateWrapper</span>&lt;User&gt;()</span><br><span class="line">        .eq(User::getId, <span class="number">1</span>)</span><br><span class="line">        .set(User::getStatus, <span class="number">0</span>)</span><br><span class="line">        .set(User::getUpdateTime, LocalDateTime.now())</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-条件批量更新"><a href="#2-条件批量更新" class="headerlink" title="2. 条件批量更新"></a>2. 条件批量更新</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 把所有年龄 &gt; 60 的用户状态改为禁用</span></span><br><span class="line"><span class="comment">// UPDATE sys_user SET status = 0 WHERE age &gt; 60</span></span><br><span class="line">userService.update(</span><br><span class="line">    <span class="keyword">new</span> <span class="title class_">LambdaUpdateWrapper</span>&lt;User&gt;()</span><br><span class="line">        .set(User::getStatus, <span class="number">0</span>)</span><br><span class="line">        .gt(User::getAge, <span class="number">60</span>)</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 把 username 为 null 的用户设置默认值</span></span><br><span class="line">userService.update(</span><br><span class="line">    <span class="keyword">new</span> <span class="title class_">LambdaUpdateWrapper</span>&lt;User&gt;()</span><br><span class="line">        .set(User::getUsername, <span class="string">&quot;未命名用户&quot;</span>)</span><br><span class="line">        .isNull(User::getUsername)</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<h3 id="3-动态更新（只更新非-null-字段）"><a href="#3-动态更新（只更新非-null-字段）" class="headerlink" title="3. 动态更新（只更新非 null 字段）"></a>3. 动态更新（只更新非 null 字段）</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 修改用户，只更新传入的非空字段</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">updateUser</span><span class="params">(User user)</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> userService.update(</span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">LambdaUpdateWrapper</span>&lt;User&gt;()</span><br><span class="line">            .eq(User::getId, user.getId())</span><br><span class="line">            .set(StringUtils.isNotBlank(user.getUsername()), </span><br><span class="line">                 User::getUsername, user.getUsername())</span><br><span class="line">            .set(StringUtils.isNotBlank(user.getPhone()), </span><br><span class="line">                 User::getPhone, user.getPhone())</span><br><span class="line">            .set(user.getStatus() != <span class="literal">null</span>, </span><br><span class="line">                 User::getStatus, user.getStatus())</span><br><span class="line">            .set(User::getUpdateTime, LocalDateTime.now())</span><br><span class="line">    );</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-SET-自增-自减"><a href="#4-SET-自增-自减" class="headerlink" title="4. SET 自增 &#x2F; 自减"></a>4. SET 自增 &#x2F; 自减</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// age = age + 1</span></span><br><span class="line">userService.update(</span><br><span class="line">    <span class="keyword">new</span> <span class="title class_">LambdaUpdateWrapper</span>&lt;User&gt;()</span><br><span class="line">        .eq(User::getId, <span class="number">1</span>)</span><br><span class="line">        .setSql(<span class="string">&quot;age = age + 1&quot;</span>)</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 或者用 setIncrBy（需要 MP 扩展或手动 SQL）</span></span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="四、删除（Remove）"><a href="#四、删除（Remove）" class="headerlink" title="四、删除（Remove）"></a>四、删除（Remove）</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 按 ID 删除</span></span><br><span class="line">userService.removeById(<span class="number">1L</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 批量删除</span></span><br><span class="line">userService.removeByIds(Arrays.asList(<span class="number">1L</span>, <span class="number">2L</span>, <span class="number">3L</span>));</span><br><span class="line"></span><br><span class="line"><span class="comment">// 条件删除</span></span><br><span class="line"><span class="comment">// DELETE FROM sys_user WHERE status = 0</span></span><br><span class="line">userService.remove(</span><br><span class="line">    <span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">        .eq(User::getStatus, <span class="number">0</span>)</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 复杂条件删除</span></span><br><span class="line">userService.remove(</span><br><span class="line">    <span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">        .eq(User::getStatus, <span class="number">0</span>)</span><br><span class="line">        .lt(User::getCreateTime, LocalDateTime.now().minusDays(<span class="number">365</span>))</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="五、创建（Create）"><a href="#五、创建（Create）" class="headerlink" title="五、创建（Create）"></a>五、创建（Create）</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 单条插入</span></span><br><span class="line"><span class="type">User</span> <span class="variable">user</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">User</span>();</span><br><span class="line">user.setUsername(<span class="string">&quot;张三&quot;</span>);</span><br><span class="line">user.setPassword(<span class="string">&quot;123456&quot;</span>);</span><br><span class="line">userService.save(user);</span><br><span class="line"><span class="comment">// user.getId() 已经被自动回填（如果配置了）</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 批量插入</span></span><br><span class="line">List&lt;User&gt; userList = Arrays.asList(</span><br><span class="line">    User.builder().username(<span class="string">&quot;张三&quot;</span>).build(),</span><br><span class="line">    User.builder().username(<span class="string">&quot;李四&quot;</span>).build()</span><br><span class="line">);</span><br><span class="line">userService.saveBatch(userList);</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="六、核心原则：Create-Remove-Update-用什么？"><a href="#六、核心原则：Create-Remove-Update-用什么？" class="headerlink" title="六、核心原则：Create&#x2F;Remove&#x2F;Update 用什么？"></a>六、核心原则：Create&#x2F;Remove&#x2F;Update 用什么？</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────────────────┐</span><br><span class="line">│                    选择决策树                                │</span><br><span class="line">├─────────────────────────────────────────────────────────────┤</span><br><span class="line">│                                                             │</span><br><span class="line">│  CREATE（新增）                                              │</span><br><span class="line">│  ├── 简单插入 → save() / saveBatch()                        │</span><br><span class="line">│  └── 需要 INSERT ... SELECT → @Insert 自定义 SQL            │</span><br><span class="line">│                                                             │</span><br><span class="line">│  REMOVE（删除）                                              │</span><br><span class="line">│  ├── 按 ID 删除 → removeById() / removeByIds()             │</span><br><span class="line">│  ├── 按单条件删除 → remove(eq(...))                         │</span><br><span class="line">│  └── 复杂条件删除 → remove(LambdaQueryWrapper) ← 用 Lambda  │</span><br><span class="line">│                                                             │</span><br><span class="line">│  UPDATE（修改）                                              │</span><br><span class="line">│  ├── 整个对象更新 → updateById(user)                        │</span><br><span class="line">│  ├── 部分字段更新 → LambdaUpdateWrapper ← 用 Lambda          │</span><br><span class="line">│  ├── 条件批量更新 → LambdaUpdateWrapper ← 用 Lambda          │</span><br><span class="line">│  └── 自定义 SQL   → @Update                                 │</span><br><span class="line">│                                                             │</span><br><span class="line">│  QUERY（查询）                                               │</span><br><span class="line">│  ├── 按 ID 查 → getById()                                   │</span><br><span class="line">│  ├── 简单列表 → list()                                      │</span><br><span class="line">│  ├── 条件查询 → LambdaQueryWrapper ← 用 Lambda              │</span><br><span class="line">│  └── 复杂联表 → @Select 自定义 SQL                          │</span><br><span class="line">│                                                             │</span><br><span class="line">└─────────────────────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+
+<h3 id="总结成一句话"><a href="#总结成一句话" class="headerlink" title="总结成一句话"></a>总结成一句话</h3><table>
+<thead>
+<tr>
+<th>操作</th>
+<th>默认选择</th>
+<th>需要 Lambda 时</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Create</strong></td>
+<td><code>save()</code> &#x2F; <code>saveBatch()</code></td>
+<td>几乎不需要</td>
+</tr>
+<tr>
+<td><strong>Remove</strong></td>
+<td><code>removeById()</code></td>
+<td>按条件批量删</td>
+</tr>
+<tr>
+<td><strong>Update</strong></td>
+<td><code>updateById()</code></td>
+<td>部分字段更新 &#x2F; 条件批量更新</td>
+</tr>
+<tr>
+<td><strong>Query</strong></td>
+<td><code>getById()</code> &#x2F; <code>list()</code></td>
+<td><strong>几乎所有条件查询都用 Lambda</strong></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="七、完整-Service-层示例"><a href="#七、完整-Service-层示例" class="headerlink" title="七、完整 Service 层示例"></a>七、完整 Service 层示例</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Service</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">UserServiceImpl</span> <span class="keyword">extends</span> <span class="title class_">ServiceImpl</span>&lt;UserMapper, User&gt; </span><br><span class="line">    <span class="keyword">implements</span> <span class="title class_">UserService</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ========== 查询 ==========</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">/** 分页+条件查询 */</span></span><br><span class="line">    <span class="keyword">public</span> Page&lt;User&gt; <span class="title function_">pageUsers</span><span class="params">(String keyword, Integer status, </span></span><br><span class="line"><span class="params">                                 Integer pageNum, Integer pageSize)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">this</span>.page(</span><br><span class="line">            <span class="keyword">new</span> <span class="title class_">Page</span>&lt;&gt;(pageNum, pageSize),</span><br><span class="line">            <span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">                .like(StringUtils.isNotBlank(keyword), </span><br><span class="line">                      User::getUsername, keyword)</span><br><span class="line">                .or(StringUtils.isNotBlank(keyword))</span><br><span class="line">                .like(StringUtils.isNotBlank(keyword), </span><br><span class="line">                      User::getPhone, keyword)</span><br><span class="line">                .eq(status != <span class="literal">null</span>, User::getStatus, status)</span><br><span class="line">                .orderByDesc(User::getCreateTime)</span><br><span class="line">        );</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** 根据用户名查（期望唯一） */</span></span><br><span class="line">    <span class="keyword">public</span> User <span class="title function_">getByUsername</span><span class="params">(String username)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">this</span>.getOne(</span><br><span class="line">            <span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">                .eq(User::getUsername, username)</span><br><span class="line">        );</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ========== 新增（直接用自带方法） ==========</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">/** 新增用户 */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">createUser</span><span class="params">(User user)</span> &#123;</span><br><span class="line">        <span class="comment">// 检查用户名是否重复</span></span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">this</span>.count(<span class="keyword">new</span> <span class="title class_">LambdaQueryWrapper</span>&lt;User&gt;()</span><br><span class="line">                .eq(User::getUsername, user.getUsername())) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">RuntimeException</span>(<span class="string">&quot;用户名已存在&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        user.setCreateTime(LocalDateTime.now());</span><br><span class="line">        user.setUpdateTime(LocalDateTime.now());</span><br><span class="line">        <span class="built_in">this</span>.save(user);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ========== 修改（用 LambdaUpdateWrapper） ==========</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">/** 修改状态 */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">changeStatus</span><span class="params">(Long id, Integer status)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.update(</span><br><span class="line">            <span class="keyword">new</span> <span class="title class_">LambdaUpdateWrapper</span>&lt;User&gt;()</span><br><span class="line">                .eq(User::getId, id)</span><br><span class="line">                .set(User::getStatus, status)</span><br><span class="line">                .set(User::getUpdateTime, LocalDateTime.now())</span><br><span class="line">        );</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** 修改密码 */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">changePassword</span><span class="params">(Long id, String oldPwd, String newPwd)</span> &#123;</span><br><span class="line">        <span class="type">User</span> <span class="variable">user</span> <span class="operator">=</span> <span class="built_in">this</span>.getById(id);</span><br><span class="line">        <span class="keyword">if</span> (user == <span class="literal">null</span> || !user.getPassword().equals(oldPwd)) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">RuntimeException</span>(<span class="string">&quot;原密码错误&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">this</span>.update(</span><br><span class="line">            <span class="keyword">new</span> <span class="title class_">LambdaUpdateWrapper</span>&lt;User&gt;()</span><br><span class="line">                .eq(User::getId, id)</span><br><span class="line">                .set(User::getPassword, newPwd)</span><br><span class="line">                .set(User::getUpdateTime, LocalDateTime.now())</span><br><span class="line">        );</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// ========== 删除（直接用自带方法） ==========</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">/** 删除用户 */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">deleteUser</span><span class="params">(Long id)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.removeById(id);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/** 批量删除 */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">deleteBatch</span><span class="params">(List&lt;Long&gt; ids)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.removeByIds(ids);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>记住一个原则：能用自带方法就用自带方法，条件复杂时才用 Lambda，需要联表时才写 SQL。</strong></p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/lambda%E8%AF%AD%E5%8F%A5%E4%BD%BF%E7%94%A8/" data-id="cuidivuPZkOkM5BlfN67gt15I" data-title="lambda语句使用" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
     <article id="post-后端/前后端交互笔记" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
   <div class="article-meta">
     <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%89%8D%E5%90%8E%E7%AB%AF%E4%BA%A4%E4%BA%92%E7%AC%94%E8%AE%B0/" class="article-date">
@@ -367,7 +621,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%89%8D%E5%90%8E%E7%AB%AF%E4%BA%A4%E4%BA%92%E7%AC%94%E8%AE%B0/" data-id="cuidPQnGNtW-rQGD4MfHurc-C" data-title="前后端交互笔记" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%89%8D%E5%90%8E%E7%AB%AF%E4%BA%A4%E4%BA%92%E7%AC%94%E8%AE%B0/" data-id="cuidr8q_cyqDxAYS1_5sT5T4P" data-title="前后端交互笔记" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -435,143 +689,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%9B%BE%E7%89%87%E7%9A%84%E4%B8%8A%E4%BC%A0/" data-id="cuidksE6QBDmj9kVJymf_0P87" data-title="图片的上传" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-后端/密码加密" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%AF%86%E7%A0%81%E5%8A%A0%E5%AF%86/" class="article-date">
-  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%AF%86%E7%A0%81%E5%8A%A0%E5%AF%86/">密码加密</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <p>﻿# 密码加密</p>
-<p>后端存储和使用密码时需要注意安全性问题</p>
-<h3 id="1-密码加密"><a href="#1-密码加密" class="headerlink" title="1. 密码加密"></a>1. 密码加密</h3><p>可以使用 <strong>BCrypt 密码加密</strong>对密码进行加密处理</p>
-<p>导入依赖：</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-security<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span>  </span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
-
-<p>创建自定义类</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">PasswordUtil</span>  </span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 注册静态对象  </span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">BCryptPasswordEncoder</span> <span class="variable">encoder</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">BCryptPasswordEncoder</span>();  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 加密  </span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> String <span class="title function_">encode</span><span class="params">(String rawPassword)</span>  </span><br><span class="line">    &#123;  </span><br><span class="line">        <span class="keyword">return</span> encoder.encode(rawPassword);  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 校验  </span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="type">boolean</span> <span class="title function_">matches</span><span class="params">(String rawPassword, String encodedPassword)</span>  </span><br><span class="line">    &#123;  </span><br><span class="line">        <span class="keyword">return</span> encoder.matches(rawPassword, encodedPassword);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><strong>原理：存储的时候使用加密存入加密后字符串，需要校验的时候，算法提取出盐值并对输入的密码进行加密，和加密好的进行对比即可</strong></p>
-<p><strong>由于该算法无法解密，拥有很高的安全性</strong></p>
-<h3 id="2-返回给前端时排除密码"><a href="#2-返回给前端时排除密码" class="headerlink" title="2. 返回给前端时排除密码"></a>2. 返回给前端时排除密码</h3><p>如果在后端是直接返回 User 对象，需要在 password 字段前面加上注解</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 密码（加密后）  </span></span><br><span class="line"><span class="meta">@JsonIgnore</span></span><br><span class="line"><span class="keyword">private</span> String password;</span><br></pre></td></tr></table></figure>
-
-<p>防止被序列化，这样返回给前端的数据就不带有密码了</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%AF%86%E7%A0%81%E5%8A%A0%E5%AF%86/" data-id="cuidtwsSPAcW9SGVQOl4cozS6" data-title="密码加密" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-后端/注解的使用" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%B3%A8%E8%A7%A3%E7%9A%84%E4%BD%BF%E7%94%A8/" class="article-date">
-  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%B3%A8%E8%A7%A3%E7%9A%84%E4%BD%BF%E7%94%A8/">注解的使用</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <p>﻿# 注解的使用</p>
-<p>在实际编写中，我们可能需要给某一个类、方法、成员函数上面加上注解</p>
-<p>比如用于标识&#x3D;&#x3D;方法重写&#x3D;&#x3D;的<code>@override</code>等等</p>
-<p>这里主要记录<strong>如何自定义注解</strong>以及<strong>如何使用</strong></p>
-<h2 id="1-注解的创建"><a href="#1-注解的创建" class="headerlink" title="1. 注解的创建"></a>1. 注解的创建</h2><p>在 idea 里面，可以直接选择创建一个注解</p>
-<p>这里给出一个简单的注解示例代码：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span>  </span><br><span class="line"><span class="meta">@Target(ElementType.PARAMETER)</span>  </span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> Param  </span><br><span class="line">&#123;  </span><br><span class="line">    String <span class="title function_">value</span><span class="params">()</span>;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="2-注解的属性"><a href="#2-注解的属性" class="headerlink" title="2. 注解的属性"></a>2. 注解的属性</h2><p>注解其实就类似于一个说明书，我们可以在类、方法、成员函数上面加上注解，然后来获取相关注解的信息</p>
-<p>其中注解有两个属性</p>
-<ul>
-<li>可以加在哪？（Target）</li>
-<li>存在多久？（Retention）</li>
-</ul>
-<p>以及一个用于读取注解的方法：Reflection（反射）</p>
-<h3 id="2-1-Target"><a href="#2-1-Target" class="headerlink" title="2.1 Target"></a>2.1 Target</h3><p>Target 属性是用于指定这个注解可以贴在哪里的，如果不指定，默认可以贴在任何地方</p>
-<p>Target 的设置示例代码如下：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target(&#123;ElementType.METHOD, ElementType.FIELD&#125;)</span></span><br></pre></td></tr></table></figure>
-
-<p>其中有几个<strong>常用值</strong>：</p>
-<ul>
-<li><code>ElementType.TYPE</code>：类、接口、注解、枚举</li>
-<li><code>ElementType.METHOD</code>：方法</li>
-<li><code>ElementType.FIELD</code>：成员变量（属性）</li>
-<li><code>ElementType.PARAMETER</code>：方法的参数</li>
-</ul>
-<p>通过设定以上几个值，就可以指定这个注解可以贴的位置</p>
-<h3 id="2-2-Retention"><a href="#2-2-Retention" class="headerlink" title="2.2 Retention"></a>2.2 Retention</h3><p>Retention 这个属性决定了这个注解的存活周期</p>
-<p>写法：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span></span><br></pre></td></tr></table></figure>
-
-<p>Retention 有三种级别：</p>
-<ol>
-<li><code>RetentionPolicy.SOURCE</code>：<strong>编译期丢弃</strong>，只用于给编译期看（比如<code>@Override</code>）</li>
-<li><code>RetentionPolicy.CLASS</code>：<strong>类加载时丢弃</strong>，可以存在于 <code>.class</code> 文件中，但是不会被加载到内存</li>
-<li><code>RetentionPolicy.RUNTIME</code>：<strong>运行期保留</strong>，这是<strong>框架</strong>唯一能读取到的级别，如果想通过反射读取，必须选这个</li>
-</ol>
-<h3 id="2-3-存放与获取"><a href="#2-3-存放与获取" class="headerlink" title="2.3 存放与获取"></a>2.3 存放与获取</h3><p>注解不仅仅是给类、方法、成员函数带上一个标签，更重要的是，注解可以存放一些成员变量，可以让调用者获取</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Table(name = &quot;user_table&quot;)</span> <span class="comment">// 自定义注解 public class User</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">private</span> String name;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>像这样，在注解定义的时候如果有<strong>成员变量</strong>，就可以在注解后的括号内<strong>赋值</strong></p>
-<p>我们可以使用<strong>反射</strong>（Reflection）来获取</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ReflectionDemo</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 1. 获取 Class 对象</span></span><br><span class="line">        Class&lt;User&gt; clazz = User.class;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 2. 检查类上有没有 @Table 注解</span></span><br><span class="line">        <span class="keyword">if</span> (clazz.isAnnotationPresent(Table.class))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 3. 获取该注解对象</span></span><br><span class="line">            <span class="type">Table</span> <span class="variable">table</span> <span class="operator">=</span> clazz.getAnnotation(Table.class);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 4. 读取注解里的属性值（这就是反射的魔力）</span></span><br><span class="line">            <span class="type">String</span> <span class="variable">tableName</span> <span class="operator">=</span> table.name();</span><br><span class="line">            System.out.println(<span class="string">&quot;成功读到数据库表名: &quot;</span> + tableName);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>通过这样，我们就获取了一个注解中包含的东西</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%B3%A8%E8%A7%A3%E7%9A%84%E4%BD%BF%E7%94%A8/" data-id="cuid0nLzqIgK02FcEnC4ycj57" data-title="注解的使用" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%9B%BE%E7%89%87%E7%9A%84%E4%B8%8A%E4%BC%A0/" data-id="cuidIkBA0C-sJGDFWpBsbhmw_" data-title="图片的上传" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1531,58 +1649,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" data-id="cuid-lKGfWuCb9HLqGkwwsXww" data-title="数据库学习笔记" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-前端/视觉效果" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2026/05/04/%E5%89%8D%E7%AB%AF/%E8%A7%86%E8%A7%89%E6%95%88%E6%9E%9C/" class="article-date">
-  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2026/05/04/%E5%89%8D%E7%AB%AF/%E8%A7%86%E8%A7%89%E6%95%88%E6%9E%9C/">视觉效果</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <h1 id="视觉效果"><a href="#视觉效果" class="headerlink" title="视觉效果"></a>视觉效果</h1><p>在前端页面设计中，为了给予良好的视觉效果，通常需要让鼠标滑动和鼠标点击变得可视化</p>
-<h2 id="一、按钮选中"><a href="#一、按钮选中" class="headerlink" title="一、按钮选中"></a>一、按钮选中</h2><p>当我们需要设计一些导航栏的时候，需要给选中的按钮加一个 CSS 样式用于区分选中和未选中</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;button :class=<span class="string">&quot;&#123; active: currentView === &#x27;bind&#x27; &#125;&quot;</span> <span class="meta">@click</span>=<span class="string">&quot;currentView = &#x27;bind&#x27;&quot;</span>&gt;</span><br><span class="line">    绑定宿舍</span><br><span class="line">&lt;/button&gt;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-tag">button</span><span class="selector-class">.active</span> &#123;</span><br><span class="line">    <span class="attribute">background</span>: <span class="number">#409eff</span>;</span><br><span class="line">    <span class="attribute">color</span>: <span class="number">#fff</span>;</span><br><span class="line">    <span class="attribute">border-color</span>: <span class="number">#409eff</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>这里的<code>:class</code>是 v-bind 的简化写法，目的是给当前按钮的 class 绑定一个动态值：<code>{ active: currentView === &#39;bind&#39; }</code></p>
-<ul>
-<li>当 <code>currentView</code> 是 <code>bind</code>的时候，当前按钮拥有了<code>active</code>这个 class，CSS 样式起效让按钮加上<strong>选中</strong>的效果</li>
-<li>当 <code>currentView</code> 不是 <code>bind</code>的时候，当前按钮失去<code>active</code>这个 class，CSS 样式失效</li>
-</ul>
-</blockquote>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%89%8D%E7%AB%AF/%E8%A7%86%E8%A7%89%E6%95%88%E6%9E%9C/" data-id="cuid_AhQIihveZ-x-PGoRDF8z" data-title="视觉效果" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" data-id="cuidkLy1XgqAfcxhZeLUb2z7X" data-title="数据库学习笔记" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1624,7 +1691,143 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E8%B7%A8%E5%9F%9F%E9%97%AE%E9%A2%98/" data-id="cuid4bcCniht-UYE7HZLOwFsU" data-title="跨域问题" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E8%B7%A8%E5%9F%9F%E9%97%AE%E9%A2%98/" data-id="cuid-QAmAeNnVC9gIp_mAjp9e" data-title="跨域问题" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-后端/密码加密" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%AF%86%E7%A0%81%E5%8A%A0%E5%AF%86/" class="article-date">
+  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%AF%86%E7%A0%81%E5%8A%A0%E5%AF%86/">密码加密</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>﻿# 密码加密</p>
+<p>后端存储和使用密码时需要注意安全性问题</p>
+<h3 id="1-密码加密"><a href="#1-密码加密" class="headerlink" title="1. 密码加密"></a>1. 密码加密</h3><p>可以使用 <strong>BCrypt 密码加密</strong>对密码进行加密处理</p>
+<p>导入依赖：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.springframework.boot<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span>  </span><br><span class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>spring-boot-starter-security<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span>  </span><br><span class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>创建自定义类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">PasswordUtil</span>  </span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 注册静态对象  </span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">BCryptPasswordEncoder</span> <span class="variable">encoder</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">BCryptPasswordEncoder</span>();  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 加密  </span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> String <span class="title function_">encode</span><span class="params">(String rawPassword)</span>  </span><br><span class="line">    &#123;  </span><br><span class="line">        <span class="keyword">return</span> encoder.encode(rawPassword);  </span><br><span class="line">    &#125;  </span><br><span class="line">  </span><br><span class="line">    <span class="comment">// 校验  </span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="type">boolean</span> <span class="title function_">matches</span><span class="params">(String rawPassword, String encodedPassword)</span>  </span><br><span class="line">    &#123;  </span><br><span class="line">        <span class="keyword">return</span> encoder.matches(rawPassword, encodedPassword);  </span><br><span class="line">    &#125;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>原理：存储的时候使用加密存入加密后字符串，需要校验的时候，算法提取出盐值并对输入的密码进行加密，和加密好的进行对比即可</strong></p>
+<p><strong>由于该算法无法解密，拥有很高的安全性</strong></p>
+<h3 id="2-返回给前端时排除密码"><a href="#2-返回给前端时排除密码" class="headerlink" title="2. 返回给前端时排除密码"></a>2. 返回给前端时排除密码</h3><p>如果在后端是直接返回 User 对象，需要在 password 字段前面加上注解</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 密码（加密后）  </span></span><br><span class="line"><span class="meta">@JsonIgnore</span></span><br><span class="line"><span class="keyword">private</span> String password;</span><br></pre></td></tr></table></figure>
+
+<p>防止被序列化，这样返回给前端的数据就不带有密码了</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E5%AF%86%E7%A0%81%E5%8A%A0%E5%AF%86/" data-id="cuidWFpfou_y-Xjf86kCmQW-2" data-title="密码加密" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      
+      
+      
+    </footer>
+  </div>
+  
+</article>
+
+
+
+  
+    <article id="post-后端/注解的使用" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%B3%A8%E8%A7%A3%E7%9A%84%E4%BD%BF%E7%94%A8/" class="article-date">
+  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="p-name article-title" href="/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%B3%A8%E8%A7%A3%E7%9A%84%E4%BD%BF%E7%94%A8/">注解的使用</a>
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p>﻿# 注解的使用</p>
+<p>在实际编写中，我们可能需要给某一个类、方法、成员函数上面加上注解</p>
+<p>比如用于标识&#x3D;&#x3D;方法重写&#x3D;&#x3D;的<code>@override</code>等等</p>
+<p>这里主要记录<strong>如何自定义注解</strong>以及<strong>如何使用</strong></p>
+<h2 id="1-注解的创建"><a href="#1-注解的创建" class="headerlink" title="1. 注解的创建"></a>1. 注解的创建</h2><p>在 idea 里面，可以直接选择创建一个注解</p>
+<p>这里给出一个简单的注解示例代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span>  </span><br><span class="line"><span class="meta">@Target(ElementType.PARAMETER)</span>  </span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> Param  </span><br><span class="line">&#123;  </span><br><span class="line">    String <span class="title function_">value</span><span class="params">()</span>;  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="2-注解的属性"><a href="#2-注解的属性" class="headerlink" title="2. 注解的属性"></a>2. 注解的属性</h2><p>注解其实就类似于一个说明书，我们可以在类、方法、成员函数上面加上注解，然后来获取相关注解的信息</p>
+<p>其中注解有两个属性</p>
+<ul>
+<li>可以加在哪？（Target）</li>
+<li>存在多久？（Retention）</li>
+</ul>
+<p>以及一个用于读取注解的方法：Reflection（反射）</p>
+<h3 id="2-1-Target"><a href="#2-1-Target" class="headerlink" title="2.1 Target"></a>2.1 Target</h3><p>Target 属性是用于指定这个注解可以贴在哪里的，如果不指定，默认可以贴在任何地方</p>
+<p>Target 的设置示例代码如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target(&#123;ElementType.METHOD, ElementType.FIELD&#125;)</span></span><br></pre></td></tr></table></figure>
+
+<p>其中有几个<strong>常用值</strong>：</p>
+<ul>
+<li><code>ElementType.TYPE</code>：类、接口、注解、枚举</li>
+<li><code>ElementType.METHOD</code>：方法</li>
+<li><code>ElementType.FIELD</code>：成员变量（属性）</li>
+<li><code>ElementType.PARAMETER</code>：方法的参数</li>
+</ul>
+<p>通过设定以上几个值，就可以指定这个注解可以贴的位置</p>
+<h3 id="2-2-Retention"><a href="#2-2-Retention" class="headerlink" title="2.2 Retention"></a>2.2 Retention</h3><p>Retention 这个属性决定了这个注解的存活周期</p>
+<p>写法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span></span><br></pre></td></tr></table></figure>
+
+<p>Retention 有三种级别：</p>
+<ol>
+<li><code>RetentionPolicy.SOURCE</code>：<strong>编译期丢弃</strong>，只用于给编译期看（比如<code>@Override</code>）</li>
+<li><code>RetentionPolicy.CLASS</code>：<strong>类加载时丢弃</strong>，可以存在于 <code>.class</code> 文件中，但是不会被加载到内存</li>
+<li><code>RetentionPolicy.RUNTIME</code>：<strong>运行期保留</strong>，这是<strong>框架</strong>唯一能读取到的级别，如果想通过反射读取，必须选这个</li>
+</ol>
+<h3 id="2-3-存放与获取"><a href="#2-3-存放与获取" class="headerlink" title="2.3 存放与获取"></a>2.3 存放与获取</h3><p>注解不仅仅是给类、方法、成员函数带上一个标签，更重要的是，注解可以存放一些成员变量，可以让调用者获取</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Table(name = &quot;user_table&quot;)</span> <span class="comment">// 自定义注解 public class User</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">private</span> String name;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>像这样，在注解定义的时候如果有<strong>成员变量</strong>，就可以在注解后的括号内<strong>赋值</strong></p>
+<p>我们可以使用<strong>反射</strong>（Reflection）来获取</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ReflectionDemo</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 1. 获取 Class 对象</span></span><br><span class="line">        Class&lt;User&gt; clazz = User.class;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 2. 检查类上有没有 @Table 注解</span></span><br><span class="line">        <span class="keyword">if</span> (clazz.isAnnotationPresent(Table.class))</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 3. 获取该注解对象</span></span><br><span class="line">            <span class="type">Table</span> <span class="variable">table</span> <span class="operator">=</span> clazz.getAnnotation(Table.class);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 4. 读取注解里的属性值（这就是反射的魔力）</span></span><br><span class="line">            <span class="type">String</span> <span class="variable">tableName</span> <span class="operator">=</span> table.name();</span><br><span class="line">            System.out.println(<span class="string">&quot;成功读到数据库表名: &quot;</span> + tableName);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>通过这样，我们就获取了一个注解中包含的东西</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E6%B3%A8%E8%A7%A3%E7%9A%84%E4%BD%BF%E7%94%A8/" data-id="cuidvQSAxyw9yYewjqYBDQmxa" data-title="注解的使用" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1760,136 +1963,7 @@
       
     </div>
     <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E9%89%B4%E6%9D%83%E6%9C%BA%E5%88%B6/" data-id="cuidhaMOpXT7HHG7UHHO1-aPM" data-title="鉴权机制" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-前端/封装axios" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2026/05/04/%E5%89%8D%E7%AB%AF/%E5%B0%81%E8%A3%85axios/" class="article-date">
-  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2026/05/04/%E5%89%8D%E7%AB%AF/%E5%B0%81%E8%A3%85axios/">封装axios</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <p>﻿# 封装 axios</p>
-<p>axios 的请求已经很完善了，但是我们还可以根据项目的实际情况进行个人的封装<br>封装主要需要实现的功能如下：</p>
-<ol>
-<li>实现请求拦截</li>
-<li>实现响应拦截</li>
-<li>常见错误信息处理</li>
-<li>请求头设置</li>
-<li>api 集中式管理</li>
-</ol>
-<h2 id="1-Axios-中文官网"><a href="#1-Axios-中文官网" class="headerlink" title="1. Axios 中文官网"></a>1. Axios 中文官网</h2><p>有任何疑问可以参考该文档：<a target="_blank" rel="noopener" href="https://www.axios-http.cn/">Axios中文文档 | Axios中文网</a></p>
-<h2 id="2-安装axios"><a href="#2-安装axios" class="headerlink" title="2. 安装axios"></a>2. 安装axios</h2><p>在项目文件夹下使用终端运行<code>npm install axios</code>以安装</p>
-<h2 id="3-封装"><a href="#3-封装" class="headerlink" title="3. 封装"></a>3. 封装</h2><p><strong>在适合的位置新建一个 js 文件，然后在里面封装 axios 请求</strong></p>
-<p>首先，axios请求可以使用<code>axios({})</code>或者<code>axios.post()</code>的方式发送，但是，axios还存在其他的方法可以发送请求</p>
-<p>我们可以创建一个 axios 的实例，并且使用相关的方法</p>
-<h3 id="3-1-导入"><a href="#3-1-导入" class="headerlink" title="3.1 导入"></a>3.1 导入</h3><p>首先，使用import语句导入axios</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> axios <span class="keyword">from</span> <span class="string">&#x27;axios&#x27;</span>;</span><br></pre></td></tr></table></figure>
-
-<h3 id="3-2-创建应用实例"><a href="#3-2-创建应用实例" class="headerlink" title="3.2 创建应用实例"></a>3.2 创建应用实例</h3><p>使用 <code>axios.create({})</code> 方法创建一个实例<br>其中两个参数的解释：</p>
-<ul>
-<li><code>baseURL</code>：请求的基础 url，会和具体的方法路径拼接而成具体的地址</li>
-<li><code>timeout</code>：超时时间，设定成10000就是10秒钟未成功视为超时</li>
-</ul>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> serviceAxios = axios.<span class="title function_">create</span>(&#123;</span><br><span class="line">	<span class="attr">baseURL</span>: <span class="string">&#x27;http://localhost:8080/pay_system_war_exploded&#x27;</span>,</span><br><span class="line">	<span class="attr">timeout</span>: <span class="number">10000</span>,</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
-
-<h3 id="3-3-设置请求拦截"><a href="#3-3-设置请求拦截" class="headerlink" title="3.3 设置请求拦截"></a>3.3 设置请求拦截</h3><p>请求拦截的意思就是：在请求发出之前我们可能需要对请求头进行处理，例如附加一些 token 之类的，这个时候就需要使用请求拦截器把请求拦截下来，处理业务逻辑</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 创建请求拦截</span></span><br><span class="line">serviceAxios.<span class="property">interceptors</span>.<span class="property">request</span>.<span class="title function_">use</span>(</span><br><span class="line">    <span class="function">(<span class="params">config</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="comment">// 如果开启 token 认证</span></span><br><span class="line">        <span class="keyword">if</span> (serverConfig.<span class="property">useTokenAuthorization</span>) &#123;</span><br><span class="line">            <span class="comment">// 请求头携带 token</span></span><br><span class="line">            config.<span class="property">headers</span>[<span class="string">&quot;Authorization&quot;</span>] = <span class="variable language_">localStorage</span>.<span class="title function_">getItem</span>(<span class="string">&quot;token&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 设置请求头</span></span><br><span class="line">        <span class="keyword">if</span> (!config.<span class="property">headers</span>[<span class="string">&quot;content-type&quot;</span>]) &#123; <span class="comment">// 如果没有设置请求头</span></span><br><span class="line">            <span class="keyword">if</span> (config.<span class="property">method</span> === <span class="string">&#x27;post&#x27;</span>) &#123;</span><br><span class="line">                <span class="comment">// post 请求</span></span><br><span class="line">                config.<span class="property">headers</span>[<span class="string">&quot;content-type&quot;</span>] = <span class="string">&quot;application/x-www-form-urlencoded&quot;</span>;</span><br><span class="line">                config.<span class="property">data</span> = qs.<span class="title function_">stringify</span>(config.<span class="property">data</span>); <span class="comment">// 序列化,比如表单数据</span></span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                config.<span class="property">headers</span>[<span class="string">&quot;content-type&quot;</span>] = <span class="string">&quot;application/json&quot;</span>; <span class="comment">// 默认类型</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;请求配置&quot;</span>, config);</span><br><span class="line">        <span class="keyword">return</span> config;</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="function">(<span class="params">error</span>) =&gt;</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="title class_">Promise</span>.<span class="title function_">reject</span>(error);</span><br><span class="line">    &#125;</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
-
-<h3 id="3-4-设置响应拦截"><a href="#3-4-设置响应拦截" class="headerlink" title="3.4 设置响应拦截"></a>3.4 设置响应拦截</h3><p>axios的返回结果默认携带很多东西，所以设置一个响应拦截可以先对结果进行处理，再将结果返回给调用者</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 创建响应拦截</span></span><br><span class="line">serviceAxios.<span class="property">interceptors</span>.<span class="property">response</span>.<span class="title function_">use</span>(</span><br><span class="line">  <span class="function">(<span class="params">res</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> data = res.<span class="property">data</span>;</span><br><span class="line">    <span class="comment">// 处理自己的业务逻辑，比如判断 token 是否过期等等</span></span><br><span class="line">    <span class="comment">// 代码块</span></span><br><span class="line">    <span class="keyword">return</span> data;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="function">(<span class="params">error</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> message = <span class="string">&quot;&quot;</span>;</span><br><span class="line">    <span class="keyword">if</span> (error &amp;&amp; error.<span class="property">response</span>) &#123;</span><br><span class="line">      <span class="keyword">switch</span> (error.<span class="property">response</span>.<span class="property">status</span>) &#123;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">302</span>:</span><br><span class="line">          message = <span class="string">&quot;接口重定向了！&quot;</span>;</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">400</span>:</span><br><span class="line">          message = <span class="string">&quot;参数不正确！&quot;</span>;</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">401</span>:</span><br><span class="line">          message = <span class="string">&quot;您未登录，或者登录已经超时，请先登录！&quot;</span>;</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">403</span>:</span><br><span class="line">          message = <span class="string">&quot;您没有权限操作！&quot;</span>;</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">404</span>:</span><br><span class="line">          message = <span class="string">`请求地址出错: <span class="subst">$&#123;error.response.config.url&#125;</span>`</span>;</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">408</span>:</span><br><span class="line">          message = <span class="string">&quot;请求超时！&quot;</span>;</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">409</span>:</span><br><span class="line">          message = <span class="string">&quot;系统已存在相同数据！&quot;</span>;</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">500</span>:</span><br><span class="line">          message = <span class="string">&quot;服务器内部错误！&quot;</span>;</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">501</span>:</span><br><span class="line">          message = <span class="string">&quot;服务未实现！&quot;</span>;</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">502</span>:</span><br><span class="line">          message = <span class="string">&quot;网关错误！&quot;</span>;</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">503</span>:</span><br><span class="line">          message = <span class="string">&quot;服务不可用！&quot;</span>;</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">504</span>:</span><br><span class="line">          message = <span class="string">&quot;服务暂时无法访问，请稍后再试！&quot;</span>;</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> <span class="number">505</span>:</span><br><span class="line">          message = <span class="string">&quot;HTTP 版本不受支持！&quot;</span>;</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">        <span class="attr">default</span>:</span><br><span class="line">          message = <span class="string">&quot;异常问题，请联系管理员！&quot;</span>;</span><br><span class="line">          <span class="keyword">break</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="title class_">Promise</span>.<span class="title function_">reject</span>(message);</span><br><span class="line">  &#125;</span><br><span class="line">);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<h2 id="4-使用"><a href="#4-使用" class="headerlink" title="4. 使用"></a>4. 使用</h2><p>现在，就成功的封装了axios，只需要在其他JS文件或者<code>&lt;script&gt;</code>块使用import语句导入所需要的post或者get即可</p>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%89%8D%E7%AB%AF/%E5%B0%81%E8%A3%85axios/" data-id="cuidZO6mrTJK5JeB2Ztt72O_N" data-title="封装axios" class="article-share-link"><span class="fa fa-share">分享</span></a>
-      
-      
-      
-    </footer>
-  </div>
-  
-</article>
-
-
-
-  
-    <article id="post-前端/App.vue 和 main.js" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
-  <div class="article-meta">
-    <a href="/2026/05/04/%E5%89%8D%E7%AB%AF/App.vue%20%E5%92%8C%20main.js/" class="article-date">
-  <time class="dt-published" datetime="2026-05-04T10:09:12.000Z" itemprop="datePublished">2026-05-04</time>
-</a>
-    
-  </div>
-  <div class="article-inner">
-    
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="p-name article-title" href="/2026/05/04/%E5%89%8D%E7%AB%AF/App.vue%20%E5%92%8C%20main.js/">App.vue 和 main.js</a>
-    </h1>
-  
-
-      </header>
-    
-    <div class="e-content article-entry" itemprop="articleBody">
-      
-        <p>﻿# App.vue 和 main.js</p>
-<p>main.js 里面的代码其实就是 <code>&lt;script&gt;</code> 标签里面的代码</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 导入</span></span><br><span class="line"><span class="keyword">import</span> &#123; createApp &#125; <span class="keyword">from</span> <span class="string">&#x27;vue&#x27;</span>  </span><br><span class="line"><span class="keyword">import</span> &#123; createPinia &#125; <span class="keyword">from</span> <span class="string">&#x27;pinia&#x27;</span>  </span><br><span class="line">  </span><br><span class="line"><span class="keyword">import</span> <span class="title class_">App</span> <span class="keyword">from</span> <span class="string">&#x27;./App.vue&#x27;</span>  </span><br><span class="line"><span class="keyword">import</span> router <span class="keyword">from</span> <span class="string">&#x27;./router&#x27;</span>  </span><br><span class="line"></span><br><span class="line"><span class="comment">// 创建app</span></span><br><span class="line"><span class="keyword">const</span> app = <span class="title function_">createApp</span>(<span class="title class_">App</span>)  </span><br><span class="line"></span><br><span class="line">app.<span class="title function_">use</span>(<span class="title function_">createPinia</span>())  </span><br><span class="line">app.<span class="title function_">use</span>(router)  </span><br><span class="line"></span><br><span class="line"><span class="comment">// 挂载  </span></span><br><span class="line">app.<span class="title function_">mount</span>(<span class="string">&#x27;#app&#x27;</span>)</span><br></pre></td></tr></table></figure>
-
-<p>app.vue 里面的则是 <code>&lt;div id=&quot;app&quot;&gt;</code> 中的内容</p>
-<pre><code class="language-javascript">&lt;template&gt;  
-    &lt;router-view/&gt;  // 根据路由跳转展示页面
-&lt;/template&gt;  
-  
-&lt;script setup&gt;  
-import {RouterView} from &#39;vue-router&#39;  
-&lt;/script&gt;  
-  
-// 全局css样式
-&lt;style&gt;
-* {  
-    margin: 0;  
-    padding: 0;  
-    box-sizing: border-box;  
-}  
-&lt;/style&gt;
-</code></pre>
-
-      
-    </div>
-    <footer class="article-footer">
-      <a data-url="http://example.com/2026/05/04/%E5%89%8D%E7%AB%AF/App.vue%20%E5%92%8C%20main.js/" data-id="cuiduVgJKwR2m3zvUghPxpUKi" data-title="App.vue 和 main.js" class="article-share-link"><span class="fa fa-share">分享</span></a>
+      <a data-url="http://example.com/2026/05/04/%E5%90%8E%E7%AB%AF/%E9%89%B4%E6%9D%83%E6%9C%BA%E5%88%B6/" data-id="cuid48tZJ4QUak9ftHYnAplOo" data-title="鉴权机制" class="article-share-link"><span class="fa fa-share">分享</span></a>
       
       
       
@@ -1941,7 +2015,7 @@ import {RouterView} from &#39;vue-router&#39;
           </li>
         
           <li>
-            <a href="/2026/05/04/go/Go%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/">Go文件操作</a>
+            <a href="/2026/05/04/java/Java%E5%AD%A6%E4%B9%A0%EF%BC%9A%E7%BF%81%E5%87%AF%E8%AF%BE%E7%A8%8B%E7%AC%94%E8%AE%B0(%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95)/">Java的基本输入与输出：</a>
           </li>
         
           <li>
@@ -1953,7 +2027,7 @@ import {RouterView} from &#39;vue-router&#39;
           </li>
         
           <li>
-            <a href="/2026/05/04/go/Go%E8%BF%9B%E9%98%B6/">GO进阶</a>
+            <a href="/2026/05/04/go/Go%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/">Go文件操作</a>
           </li>
         
       </ul>
