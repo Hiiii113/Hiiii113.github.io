@@ -10,19 +10,7 @@
   <rights>All rights reserved 2026, Hiiii113</rights>
   <subtitle>个人博客网站</subtitle>
   <title>Hiiii113</title>
-  <updated>2026-05-05T02:31:22.381Z</updated>
-  <entry>
-    <author>
-      <name>Hiiii113</name>
-    </author>
-    <id>https://hiiii113.github.io/posts/0</id>
-    <link href="https://hiiii113.github.io/posts/0"/>
-    <published>2026-05-05T01:54:05.592Z</published>
-    <summary>
-      <![CDATA[<h1 id="GO进阶"><a href="#GO进阶" class="headerlink" title="GO进阶"></a>GO进阶</h1><h2 id="init和defer函数"><a href="#init和defer函数" class="headerlink"]]>
-    </summary>
-    <updated>2026-05-05T02:31:22.381Z</updated>
-  </entry>
+  <updated>2026-04-28T13:32:22.000Z</updated>
   <entry>
     <author>
       <name>Hiiii113</name>
@@ -107,6 +95,22 @@
     </summary>
     <title>Go文件操作</title>
     <updated>2026-05-04T05:42:05.000Z</updated>
+  </entry>
+  <entry>
+    <author>
+      <name>Hiiii113</name>
+    </author>
+    <category term="Go" scheme="https://hiiii113.github.io/categories/Go/"/>
+    <category term="Go" scheme="https://hiiii113.github.io/tags/Go/"/>
+    <category term="进阶" scheme="https://hiiii113.github.io/tags/%E8%BF%9B%E9%98%B6/"/>
+    <id>https://hiiii113.github.io/posts/cb518c06</id>
+    <link href="https://hiiii113.github.io/posts/cb518c06"/>
+    <published>2026-05-04T10:09:12.000Z</published>
+    <summary>
+      <![CDATA[<h1 id="GO进阶"><a href="#GO进阶" class="headerlink" title="GO进阶"></a>GO进阶</h1><h2 id="init和defer函数"><a href="#init和defer函数" class="headerlink"]]>
+    </summary>
+    <title>GO进阶</title>
+    <updated>2026-05-05T02:23:54.000Z</updated>
   </entry>
   <entry>
     <author>

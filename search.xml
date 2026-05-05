@@ -4,17 +4,6 @@
   
     
     <entry>
-      <title></title>
-      <link href="/posts/0.html"/>
-      <url>/posts/0.html</url>
-      
-      
-      
-    </entry>
-    
-    
-    
-    <entry>
       <title>App.vue 和 main.js</title>
       <link href="/posts/73f0799a.html"/>
       <url>/posts/73f0799a.html</url>
@@ -134,6 +123,31 @@
             <tag> Go </tag>
             
             <tag> 文件IO </tag>
+            
+        </tags>
+      
+    </entry>
+    
+    
+    
+    <entry>
+      <title>GO进阶</title>
+      <link href="/posts/cb518c06.html"/>
+      <url>/posts/cb518c06.html</url>
+      
+      
+      <categories>
+          
+          <category> Go </category>
+          
+      </categories>
+      
+      
+        <tags>
+            
+            <tag> Go </tag>
+            
+            <tag> 进阶 </tag>
             
         </tags>
       
