@@ -19,13 +19,14 @@
     <category term="组合数" scheme="https://hiiii113.github.io/tags/%E7%BB%84%E5%90%88%E6%95%B0/"/>
     <category term="背包DP" scheme="https://hiiii113.github.io/tags/%E8%83%8C%E5%8C%85DP/"/>
     <category term="动态规划" scheme="https://hiiii113.github.io/tags/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92/"/>
+    <category term="算法" scheme="https://hiiii113.github.io/tags/%E7%AE%97%E6%B3%95/"/>
     <id>https://hiiii113.github.io/posts/dc945fee</id>
     <link href="https://hiiii113.github.io/posts/dc945fee"/>
     <published>2026-05-23T01:00:00.000Z</published>
     <summary>
       <![CDATA[<h1 id="组合数、01背包、完全背包"><a href="#组合数、01背包、完全背包" class="headerlink" title="组合数、01背包、完全背包"></a>组合数、01背包、完全背包</h1><h1 id="一、组合数"><a]]>
     </summary>
-    <title>组合数、01背包、完全背包</title>
+    <title>StarryCoding算法课——组合数、01背包、完全背包</title>
     <updated>2026-05-23T01:00:00.000Z</updated>
   </entry>
   <entry>
@@ -37,13 +38,14 @@
     <category term="数论" scheme="https://hiiii113.github.io/tags/%E6%95%B0%E8%AE%BA/"/>
     <category term="最小生成树" scheme="https://hiiii113.github.io/tags/%E6%9C%80%E5%B0%8F%E7%94%9F%E6%88%90%E6%A0%91/"/>
     <category term="质因数分解" scheme="https://hiiii113.github.io/tags/%E8%B4%A8%E5%9B%A0%E6%95%B0%E5%88%86%E8%A7%A3/"/>
+    <category term="算法" scheme="https://hiiii113.github.io/tags/%E7%AE%97%E6%B3%95/"/>
     <id>https://hiiii113.github.io/posts/119bc6a0</id>
     <link href="https://hiiii113.github.io/posts/119bc6a0"/>
     <published>2026-05-20T12:00:00.000Z</published>
     <summary>
       <![CDATA[<h1 id="最小生成树、质因数分解"><a href="#最小生成树、质因数分解" class="headerlink" title="最小生成树、质因数分解"></a>最小生成树、质因数分解</h1><h1 id="一、最小生成树"><a href="#一、最小生成树"]]>
     </summary>
-    <title>最小生成树、质因数分解</title>
+    <title>StarryCoding算法课——最小生成树、质因数分解</title>
     <updated>2026-05-20T12:00:00.000Z</updated>
   </entry>
   <entry>
@@ -53,13 +55,14 @@
     <category term="StarryCoding" scheme="https://hiiii113.github.io/categories/StarryCoding/"/>
     <category term="图论" scheme="https://hiiii113.github.io/tags/%E5%9B%BE%E8%AE%BA/"/>
     <category term="拓扑排序" scheme="https://hiiii113.github.io/tags/%E6%8B%93%E6%89%91%E6%8E%92%E5%BA%8F/"/>
+    <category term="算法" scheme="https://hiiii113.github.io/tags/%E7%AE%97%E6%B3%95/"/>
     <id>https://hiiii113.github.io/posts/fb40efc5</id>
     <link href="https://hiiii113.github.io/posts/fb40efc5"/>
     <published>2026-05-19T05:00:00.000Z</published>
     <summary>
       <![CDATA[<h1 id="拓扑排序"><a href="#拓扑排序" class="headerlink" title="拓扑排序"></a>拓扑排序</h1><h1 id="一、什么是拓扑序"><a href="#一、什么是拓扑序" class="headerlink"]]>
     </summary>
-    <title>拓扑排序</title>
+    <title>StarryCoding算法课——拓扑排序</title>
     <updated>2026-05-19T05:00:00.000Z</updated>
   </entry>
   <entry>
@@ -70,13 +73,14 @@
     <category term="图论" scheme="https://hiiii113.github.io/tags/%E5%9B%BE%E8%AE%BA/"/>
     <category term="并查集" scheme="https://hiiii113.github.io/tags/%E5%B9%B6%E6%9F%A5%E9%9B%86/"/>
     <category term="最短路" scheme="https://hiiii113.github.io/tags/%E6%9C%80%E7%9F%AD%E8%B7%AF/"/>
+    <category term="算法" scheme="https://hiiii113.github.io/tags/%E7%AE%97%E6%B3%95/"/>
     <id>https://hiiii113.github.io/posts/5e561f32</id>
     <link href="https://hiiii113.github.io/posts/5e561f32"/>
     <published>2026-05-18T10:00:00.000Z</published>
     <summary>
       <![CDATA[<h1 id="并查集、最短路"><a href="#并查集、最短路" class="headerlink" title="并查集、最短路"></a>并查集、最短路</h1><h1 id="一、并查集"><a href="#一、并查集" class="headerlink"]]>
     </summary>
-    <title>并查集、最短路</title>
+    <title>StarryCoding算法课——并查集、最短路</title>
     <updated>2026-05-18T10:00:00.000Z</updated>
   </entry>
   <entry>
@@ -90,13 +94,14 @@
     <category term="lcm" scheme="https://hiiii113.github.io/tags/lcm/"/>
     <category term="快速幂" scheme="https://hiiii113.github.io/tags/%E5%BF%AB%E9%80%9F%E5%B9%82/"/>
     <category term="乘法逆元" scheme="https://hiiii113.github.io/tags/%E4%B9%98%E6%B3%95%E9%80%86%E5%85%83/"/>
+    <category term="算法" scheme="https://hiiii113.github.io/tags/%E7%AE%97%E6%B3%95/"/>
     <id>https://hiiii113.github.io/posts/37088cb2</id>
     <link href="https://hiiii113.github.io/posts/37088cb2"/>
     <published>2026-05-17T13:00:00.000Z</published>
     <summary>
       <![CDATA[<h1 id="埃式筛法、gcd和lcm、快速幂、乘法逆元"><a href="#埃式筛法、gcd和lcm、快速幂、乘法逆元" class="headerlink"]]>
     </summary>
-    <title>埃式筛法、gcd和lcm、快速幂、乘法逆元</title>
+    <title>StarryCoding算法课——埃式筛法、gcd和lcm、快速幂、乘法逆元</title>
     <updated>2026-05-17T13:00:00.000Z</updated>
   </entry>
   <entry>
@@ -110,254 +115,14 @@
     <category term="BFS" scheme="https://hiiii113.github.io/tags/BFS/"/>
     <category term="邻接矩阵" scheme="https://hiiii113.github.io/tags/%E9%82%BB%E6%8E%A5%E7%9F%A9%E9%98%B5/"/>
     <category term="邻接表" scheme="https://hiiii113.github.io/tags/%E9%82%BB%E6%8E%A5%E8%A1%A8/"/>
+    <category term="算法" scheme="https://hiiii113.github.io/tags/%E7%AE%97%E6%B3%95/"/>
     <id>https://hiiii113.github.io/posts/162c4186</id>
     <link href="https://hiiii113.github.io/posts/162c4186"/>
     <published>2026-05-15T12:00:00.000Z</published>
     <summary>
       <![CDATA[<h1 id="初见图、树"><a href="#初见图、树" class="headerlink" title="初见图、树"></a>初见图、树</h1><h1 id="一、有向图和无向图"><a href="#一、有向图和无向图" class="headerlink"]]>
     </summary>
-    <title>初见图、树</title>
+    <title>StarryCoding算法课——初见图、树</title>
     <updated>2026-05-15T12:00:00.000Z</updated>
-  </entry>
-  <entry>
-    <author>
-      <name>Hiiii113</name>
-    </author>
-    <category term="前端" scheme="https://hiiii113.github.io/categories/frontend/"/>
-    <category term="Vue" scheme="https://hiiii113.github.io/tags/Vue/"/>
-    <category term="前端" scheme="https://hiiii113.github.io/tags/%E5%89%8D%E7%AB%AF/"/>
-    <id>https://hiiii113.github.io/posts/73f0799a</id>
-    <link href="https://hiiii113.github.io/posts/73f0799a"/>
-    <published>2026-05-04T10:09:12.000Z</published>
-    <summary>
-      <![CDATA[<p>﻿# App.vue 和 main.js</p>
-<p>main.js 里面的代码其实就是 <code>&lt;script&gt;</code> 标签里面的代码</p>
-<figure class="highlight]]>
-    </summary>
-    <title>App.vue 和 main.js</title>
-    <updated>2026-04-28T13:32:22.000Z</updated>
-  </entry>
-  <entry>
-    <author>
-      <name>Hiiii113</name>
-    </author>
-    <category term="前端" scheme="https://hiiii113.github.io/categories/frontend/"/>
-    <category term="Vue" scheme="https://hiiii113.github.io/tags/Vue/"/>
-    <category term="Element Plus" scheme="https://hiiii113.github.io/tags/Element-Plus/"/>
-    <category term="UI框架" scheme="https://hiiii113.github.io/tags/UI%E6%A1%86%E6%9E%B6/"/>
-    <id>https://hiiii113.github.io/posts/104dc2d0</id>
-    <link href="https://hiiii113.github.io/posts/104dc2d0"/>
-    <published>2026-05-04T10:09:12.000Z</published>
-    <summary>
-      <![CDATA[<h1 id="Element-Plus"><a href="#Element-Plus" class="headerlink" title="Element Plus"></a>Element Plus</h1><p>Element Plus 是一个基于 Vue3 的 UI]]>
-    </summary>
-    <title>Element Plus</title>
-    <updated>2026-04-28T13:34:22.000Z</updated>
-  </entry>
-  <entry>
-    <author>
-      <name>Hiiii113</name>
-    </author>
-    <category term="Go" scheme="https://hiiii113.github.io/categories/Go/"/>
-    <category term="Go" scheme="https://hiiii113.github.io/tags/Go/"/>
-    <category term="文件IO" scheme="https://hiiii113.github.io/tags/%E6%96%87%E4%BB%B6IO/"/>
-    <id>https://hiiii113.github.io/posts/aecd7829</id>
-    <link href="https://hiiii113.github.io/posts/aecd7829"/>
-    <published>2026-05-04T10:09:12.000Z</published>
-    <summary>
-      <![CDATA[<h1 id="Go文件操作"><a href="#Go文件操作" class="headerlink" title="Go文件操作"></a>Go文件操作</h1><ul>
-<li><h2 id="文件读取"><a href="#文件读取"]]>
-    </summary>
-    <title>Go文件操作</title>
-    <updated>2026-05-04T05:42:05.000Z</updated>
-  </entry>
-  <entry>
-    <author>
-      <name>Hiiii113</name>
-    </author>
-    <category term="Go" scheme="https://hiiii113.github.io/categories/Go/"/>
-    <category term="Go" scheme="https://hiiii113.github.io/tags/Go/"/>
-    <category term="基础语法" scheme="https://hiiii113.github.io/tags/%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95/"/>
-    <id>https://hiiii113.github.io/posts/65204dae</id>
-    <link href="https://hiiii113.github.io/posts/65204dae"/>
-    <published>2026-05-04T10:09:12.000Z</published>
-    <summary>
-      <![CDATA[<h1 id="GO基础"><a href="#GO基础" class="headerlink" title="GO基础"></a>GO基础</h1><p>进阶操作请查看<a href="Go%E8%BF%9B%E9%98%B6">Go进阶</a></p>
-<h2]]>
-    </summary>
-    <title>GO基础</title>
-    <updated>2026-05-04T09:26:54.000Z</updated>
-  </entry>
-  <entry>
-    <author>
-      <name>Hiiii113</name>
-    </author>
-    <category term="Go" scheme="https://hiiii113.github.io/categories/Go/"/>
-    <category term="Go" scheme="https://hiiii113.github.io/tags/Go/"/>
-    <category term="进阶" scheme="https://hiiii113.github.io/tags/%E8%BF%9B%E9%98%B6/"/>
-    <id>https://hiiii113.github.io/posts/cb518c06</id>
-    <link href="https://hiiii113.github.io/posts/cb518c06"/>
-    <published>2026-05-04T10:09:12.000Z</published>
-    <summary>
-      <![CDATA[<h1 id="GO进阶"><a href="#GO进阶" class="headerlink" title="GO进阶"></a>GO进阶</h1><h2 id="init和defer函数"><a href="#init和defer函数" class="headerlink"]]>
-    </summary>
-    <title>GO进阶</title>
-    <updated>2026-05-05T02:23:54.000Z</updated>
-  </entry>
-  <entry>
-    <author>
-      <name>Hiiii113</name>
-    </author>
-    <category term="Go" scheme="https://hiiii113.github.io/categories/Go/"/>
-    <category term="Go" scheme="https://hiiii113.github.io/tags/Go/"/>
-    <category term="并发" scheme="https://hiiii113.github.io/tags/%E5%B9%B6%E5%8F%91/"/>
-    <id>https://hiiii113.github.io/posts/e1c02cc4</id>
-    <link href="https://hiiii113.github.io/posts/e1c02cc4"/>
-    <published>2026-05-04T10:09:12.000Z</published>
-    <summary>
-      <![CDATA[<h1 id="Go-拓展"><a href="#Go-拓展" class="headerlink" title="Go 拓展"></a>Go 拓展</h1><h2 id="单元测试"><a href="#单元测试" class="headerlink"]]>
-    </summary>
-    <title>Go 拓展</title>
-    <updated>2026-05-04T04:06:11.000Z</updated>
-  </entry>
-  <entry>
-    <author>
-      <name>Hiiii113</name>
-    </author>
-    <category term="Java" scheme="https://hiiii113.github.io/categories/Java/"/>
-    <category term="基础语法" scheme="https://hiiii113.github.io/tags/%E5%9F%BA%E7%A1%80%E8%AF%AD%E6%B3%95/"/>
-    <category term="Java" scheme="https://hiiii113.github.io/tags/Java/"/>
-    <id>https://hiiii113.github.io/posts/fd989f64</id>
-    <link href="https://hiiii113.github.io/posts/fd989f64"/>
-    <published>2026-05-04T10:09:12.000Z</published>
-    <summary>
-      <![CDATA[<p>﻿# Java的基础代码样式：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span]]>
-    </summary>
-    <title>Java的基本输入与输出：</title>
-    <updated>2026-04-28T13:32:20.000Z</updated>
-  </entry>
-  <entry>
-    <author>
-      <name>Hiiii113</name>
-    </author>
-    <category term="后端" scheme="https://hiiii113.github.io/categories/backend/"/>
-    <category term="MyBatis Plus" scheme="https://hiiii113.github.io/tags/MyBatis-Plus/"/>
-    <category term="ORM" scheme="https://hiiii113.github.io/tags/ORM/"/>
-    <category term="数据库" scheme="https://hiiii113.github.io/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/"/>
-    <id>https://hiiii113.github.io/posts/ca0fb6ec</id>
-    <link href="https://hiiii113.github.io/posts/ca0fb6ec"/>
-    <published>2026-05-04T10:09:12.000Z</published>
-    <summary>
-      <![CDATA[<p>﻿# Mybatis Plus笔记</p>
-<h2 id="1-前言"><a href="#1-前言" class="headerlink" title="1. 前言"></a>1. 前言</h2><blockquote>
-<p> Mybatis Plus 是对]]>
-    </summary>
-    <title>1. 服务器端口配置</title>
-    <updated>2026-04-28T13:33:28.000Z</updated>
-  </entry>
-  <entry>
-    <author>
-      <name>Hiiii113</name>
-    </author>
-    <category term="Java" scheme="https://hiiii113.github.io/categories/Java/"/>
-    <category term="Java" scheme="https://hiiii113.github.io/tags/Java/"/>
-    <category term="日期时间" scheme="https://hiiii113.github.io/tags/%E6%97%A5%E6%9C%9F%E6%97%B6%E9%97%B4/"/>
-    <id>https://hiiii113.github.io/posts/30660b99</id>
-    <link href="https://hiiii113.github.io/posts/30660b99"/>
-    <published>2026-05-04T10:09:12.000Z</published>
-    <summary>
-      <![CDATA[<p>﻿# LocalDateTime</p>
-<h2 id="一、LocalDateTime-和-datetime"><a href="#一、LocalDateTime-和-datetime" class="headerlink" title="一、LocalDateTime]]>
-    </summary>
-    <title>LocalDatetime</title>
-    <updated>2026-04-28T13:32:24.000Z</updated>
-  </entry>
-  <entry>
-    <author>
-      <name>Hiiii113</name>
-    </author>
-    <category term="Java" scheme="https://hiiii113.github.io/categories/Java/"/>
-    <category term="Java" scheme="https://hiiii113.github.io/tags/Java/"/>
-    <category term="面向对象" scheme="https://hiiii113.github.io/tags/%E9%9D%A2%E5%90%91%E5%AF%B9%E8%B1%A1/"/>
-    <id>https://hiiii113.github.io/posts/c2bd8527</id>
-    <link href="https://hiiii113.github.io/posts/c2bd8527"/>
-    <published>2026-05-04T10:09:12.000Z</published>
-    <summary>
-      <![CDATA[<p>﻿#]]>
-    </summary>
-    <title>如何创建对象？</title>
-    <updated>2026-04-28T13:32:21.000Z</updated>
-  </entry>
-  <entry>
-    <author>
-      <name>Hiiii113</name>
-    </author>
-    <category term="数据库" scheme="https://hiiii113.github.io/categories/database/"/>
-    <category term="Redis" scheme="https://hiiii113.github.io/tags/Redis/"/>
-    <category term="缓存" scheme="https://hiiii113.github.io/tags/%E7%BC%93%E5%AD%98/"/>
-    <category term="NoSQL" scheme="https://hiiii113.github.io/tags/NoSQL/"/>
-    <id>https://hiiii113.github.io/posts/bae4ff13</id>
-    <link href="https://hiiii113.github.io/posts/bae4ff13"/>
-    <published>2026-05-04T10:09:12.000Z</published>
-    <summary>
-      <![CDATA[<h1 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h1><h2 id="一、Redis-概述"><a href="#一、Redis-概述" class="headerlink"]]>
-    </summary>
-    <title>Redis</title>
-    <updated>2026-04-28T13:34:21.000Z</updated>
-  </entry>
-  <entry>
-    <author>
-      <name>Hiiii113</name>
-    </author>
-    <category term="后端" scheme="https://hiiii113.github.io/categories/backend/"/>
-    <category term="Spring AI" scheme="https://hiiii113.github.io/tags/Spring-AI/"/>
-    <category term="AI" scheme="https://hiiii113.github.io/tags/AI/"/>
-    <category term="Spring" scheme="https://hiiii113.github.io/tags/Spring/"/>
-    <id>https://hiiii113.github.io/posts/b56a01b</id>
-    <link href="https://hiiii113.github.io/posts/b56a01b"/>
-    <published>2026-05-04T10:09:12.000Z</published>
-    <summary>
-      <![CDATA[<h1 id="Spring-AI"><a href="#Spring-AI" class="headerlink" title="Spring AI"></a>Spring AI</h1><p><img]]>
-    </summary>
-    <title>Spring AI</title>
-    <updated>2026-04-28T13:34:21.000Z</updated>
-  </entry>
-  <entry>
-    <author>
-      <name>Hiiii113</name>
-    </author>
-    <category term="后端" scheme="https://hiiii113.github.io/categories/backend/"/>
-    <category term="Sa-Token" scheme="https://hiiii113.github.io/tags/Sa-Token/"/>
-    <category term="权限认证" scheme="https://hiiii113.github.io/tags/%E6%9D%83%E9%99%90%E8%AE%A4%E8%AF%81/"/>
-    <category term="安全" scheme="https://hiiii113.github.io/tags/%E5%AE%89%E5%85%A8/"/>
-    <id>https://hiiii113.github.io/posts/70ac03d7</id>
-    <link href="https://hiiii113.github.io/posts/70ac03d7"/>
-    <published>2026-05-04T10:09:12.000Z</published>
-    <summary>
-      <![CDATA[<p>﻿# Sa-Token</p>
-<h2 id="一、了解"><a href="#一、了解" class="headerlink" title="一、了解"></a>一、了解</h2><p>首先我们可以了解一下 sa-token]]>
-    </summary>
-    <title>Sa-Token</title>
-    <updated>2026-04-28T13:33:29.000Z</updated>
-  </entry>
-  <entry>
-    <author>
-      <name>Hiiii113</name>
-    </author>
-    <category term="前端" scheme="https://hiiii113.github.io/categories/frontend/"/>
-    <category term="Vue" scheme="https://hiiii113.github.io/tags/Vue/"/>
-    <category term="Vue Router" scheme="https://hiiii113.github.io/tags/Vue-Router/"/>
-    <id>https://hiiii113.github.io/posts/1140c3bb</id>
-    <link href="https://hiiii113.github.io/posts/1140c3bb"/>
-    <published>2026-05-04T10:09:12.000Z</published>
-    <summary>
-      <![CDATA[<p>﻿# Vue路由设置</p>
-<p>在前端写好了几个 Vue 组件并需要相互跳转时，需要手动设置路由</p>
-<p>示例：</p>
-<pre><code class="language-javascript">import {createRouter,]]>
-    </summary>
-    <title>Vue路由设置</title>
-    <updated>2026-04-28T13:33:30.000Z</updated>
   </entry>
 </feed>
