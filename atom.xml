@@ -125,4 +125,20 @@
     <title>StarryCoding算法课——初见图、树</title>
     <updated>2026-05-15T12:00:00.000Z</updated>
   </entry>
+  <entry>
+    <author>
+      <name>Hiiii113</name>
+    </author>
+    <category term="Redis" scheme="https://hiiii113.github.io/categories/Redis/"/>
+    <category term="数据库" scheme="https://hiiii113.github.io/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/"/>
+    <category term="Redis" scheme="https://hiiii113.github.io/tags/Redis/"/>
+    <id>https://hiiii113.github.io/posts/6a343b7f</id>
+    <link href="https://hiiii113.github.io/posts/6a343b7f"/>
+    <published>2026-05-06T04:00:00.000Z</published>
+    <summary>
+      <![CDATA[<h1 id="Redis入门"><a href="#Redis入门" class="headerlink" title="Redis入门"></a>Redis入门</h1><h1 id="一、Redis-概述"><a href="#一、Redis-概述"]]>
+    </summary>
+    <title>Redis入门</title>
+    <updated>2026-05-06T04:00:00.000Z</updated>
+  </entry>
 </feed>
